@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
+import click
 
 def create_profile():
 
@@ -25,35 +26,41 @@ def create_profile():
 	profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/pdf")
 	return profile
 
-def path_of(name):
+def path_of(name: str):
 	return "//a[text()='" + name + "' and @class='il_ContainerItemTitle']"
 
+@click.command()
+@click.argument('assignment_num')
+@click.option('-la', is_flag=True, help="Download 'Lineare Algebra 1' assignments.")
+def main(assignment_num: str, la):
+	driver = webdriver.Firefox(firefox_profile=create_profile())
+	wait = WebDriverWait(driver, 10)
+	
+	# Open page in new window
+	ilias_main = "https://ilias.studium.kit.edu"
+	driver.get(ilias_main)
+	
+	# Click on login buttons
+	driver.find_element_by_link_text('Anmelden').click()
+	driver.find_element_by_id('f807').click()
+	
+	# Fill in login credentials and login
+	driver.find_element_by_id('name').send_keys('uzxhf')
+	driver.find_element_by_id('password').send_keys('sccK1t!?com', Keys.ENTER)
+	
+	# Click on 'Lineare Algebra 1'
+	if lin_alg:
+		wait.until(EC.element_to_be_clickable((By.XPATH, path_of("Lineare Algebra 1")))).click()
+	
+	# Click on 'Übungen'
+	wait.until(EC.element_to_be_clickable((By.XPATH, path_of("Übungen")))).click()
+	
+	# Find assignment and download it
+	assignment = driver.find_element_by_xpath(path_of("Blatt0{}".format(assignment_num)))
+	driver.execute_script("arguments[0].click();", assignment)
+	
+	print('Success')
+	#driver.close()
 
-driver = webdriver.Firefox(firefox_profile=create_profile())
-wait = WebDriverWait(driver, 10)
-
-# Open page in new window
-ilias_main = "https://ilias.studium.kit.edu"
-driver.get(ilias_main)
-
-# Click on login buttons
-driver.find_element_by_link_text('Anmelden').click()
-driver.find_element_by_id('f807').click()
-
-# Fill in login credentials and login
-driver.find_element_by_id('name').send_keys('uzxhf')
-driver.find_element_by_id('password').send_keys('sccK1t!?com', Keys.ENTER)
-
-# Click on 'Lineare Algebra 1'
-wait.until(EC.element_to_be_clickable((By.XPATH, path_of("Lineare Algebra 1")))).click()
-
-# Click on 'Übungen'
-wait.until(EC.element_to_be_clickable((By.XPATH, path_of("Übungen")))).click()
-
-# Find assignment and download it
-assignment_09 = driver.find_element_by_xpath(path_of("Blatt09"))
-driver.execute_script("arguments[0].click();", assignment_09)
-
-print('Success')
-#driver.close()
-
+if __name__ == '__main__':
+	main()
