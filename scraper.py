@@ -5,6 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 import time
+import click
 
 class Scraper:
 
@@ -15,13 +16,14 @@ class Scraper:
 		self.root_path = root_path
 
 	def to_home(self):
-		# Open page in new window
+		click.echo("Opening main page...")
 		self.driver.get(self.main_page)
 		
-		# Click on login button
+		# Click on login buttons
 		self.driver.find_element_by_link_text('Anmelden').click()
 		self.driver.find_element_by_id('f807').click()
 		
+		click.echo("Logging in...")
 		# Fill in login credentials and login
 		self.driver.find_element_by_id('name').send_keys('uzxhf')
 		self.driver.find_element_by_id('password').send_keys('sccK1t!?com', Keys.ENTER)
@@ -54,6 +56,7 @@ class Scraper:
 		'''
 		Downloads the specified assignment of the given lecture.
 		'''
+		click.echo("Downloading assignment {} from class '{}'...".format(assignment_num, lecture.name))
 		# Open the lecture in a new tab (and switch to it as specified in firefox preferences)
 		self.click_link(lecture.name, True)
 		self.switch_to_last_tab()

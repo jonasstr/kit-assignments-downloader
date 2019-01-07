@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from selenium import webdriver
 
 import click
@@ -49,7 +48,7 @@ def main(assignment_num: int, class_names, all):
 	scraper.to_home()
 
 	scraper.download(classes['la'], 9)
-	print('Success')
+	print("Done.")
 	driver.close()
 
 if __name__ == '__main__':
