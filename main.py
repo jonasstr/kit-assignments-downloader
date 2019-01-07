@@ -8,6 +8,7 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 import click
 import time
+import scraper
 
 class Lecture:
 
@@ -17,10 +18,10 @@ class Lecture:
 		self.frmt = frmt
 		self.folder_name = folder_name
 
-ilias_main = "https://ilias.studium.kit.edu"
 root_path = "G:\\KIT\\Sonstiges\\WS18-19" 
 la = Lecture("Lineare Algebra 1", "Übungen", "Blatt$", "Lineare Algebra I")
 gbi = Lecture("Grundbegriffe der Informatik (2018/2019)", "Übungsblätter", "$-aufgaben", "Grundbegriffe der Informatik")
+all_classes = ['la', 'gbi']
 
 def create_profile():
 
@@ -72,43 +73,38 @@ def switch_to_first_tab(driver):
 	actions.key_down(Keys.CONTROL).key_up(Keys.CONTROL).perform()
 	driver.switch_to.window(driver.window_handles[0])
 
+def download(driver, wait, lecture: Lecture, num: int):
+	# Open the lecture in a new tab (and switch to it as specified in firefox preferences)
+	click_link(driver, wait, lecture.name, True)
+	switch_to_last_tab(driver)
+	# Click on the assignments folder
+	click_link(driver, wait, lecture.assignment)
+	# Download assigment:
+	# Retrieve the assignment name by replacing the 'frmt' variable of the lecture
+	# with the specified assignment number and append leading zeroes if necessary
+	assignment = lecture.frmt.replace("$", str(num).zfill(2))
+	click_link(driver, wait, assignment)
+
 @click.command()
 @click.argument('assignment_num')
-#@click.option('-la', is_flag=True)
-@click.argument('class_names', nargs=-1, type=click.Choice(['la', 'gbi', 'prg']))
-def main(assignment_num: int, class_names):
-
-	lecture = globals()[class_names[0]]
-	print(lecture.assignment)
+@click.argument('class_names', nargs=-1, required=False, type=click.Choice(all_classes))
+@click.option("--all", "-a", is_flag=True, default=True, help="Download assignments from all specified classes.")
+def main(assignment_num: int, class_names, all):
 
 	driver = webdriver.Firefox(firefox_profile=create_profile())	
-	# Open page in new window
-	driver.get(ilias_main)
-	
-	# Click on login button
-	driver.find_element_by_link_text('Anmelden').click()
-	driver.find_element_by_id('f807').click()
-	
-	# Fill in login credentials and login
-	driver.find_element_by_id('name').send_keys('uzxhf')
-	driver.find_element_by_id('password').send_keys('sccK1t!?com', Keys.ENTER)
+	scraper = Scraper(driver)
+
+	scraper.to_home()
 
 	wait = WebDriverWait(driver, 10)
-	for name in class_names:
+	classes_to_iterate = all_classes if all else class_names
+	for name in classes_to_iterate:
 		lecture = globals()[name]
-		# Open the lecture in a new tab (and switch to it as specified in firefox preferences)
-		click_link(driver, wait, lecture.name, True)
-		switch_to_last_tab(driver)
-		# Click on the assignments folder
-		click_link(driver, wait, lecture.assignment)
+		download(driver, wait, lecture, assignment_num)
 		# Download assignments
-		for num in range(1, int(assignment_num) + 1):
-			# Retrieve the assignment name by replacing the 'frmt' variable of the lecture
-			# with the specified assignment number and append leading zeroes if necessary
-			assignment = lecture.frmt.replace("$", str(num).zfill(2))
-			click_link(driver, wait, assignment)
-
+		#for num in range(1, int(assignment_num) + 1):
 		switch_to_first_tab(driver)
+		
 	
 	print('Success')
 	#driver.close()
