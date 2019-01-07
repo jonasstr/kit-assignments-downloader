@@ -6,7 +6,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
-import threading
 import click
 import time
 
@@ -20,8 +19,8 @@ class Lecture:
 
 ilias_main = "https://ilias.studium.kit.edu"
 root_path = "G:\\KIT\\Sonstiges\\WS18-19" 
-la = Lecture("Lineare Algebra 1", "Übungen", "Blatt09", "Lineare Algebra I")
-gbi = Lecture("Grundbegriffe der Informatik (2018/2019)", "Übungsblätter", "09-aufgaben", "Grundbegriffe der Informatik")
+la = Lecture("Lineare Algebra 1", "Übungen", "Blatt$", "Lineare Algebra I")
+gbi = Lecture("Grundbegriffe der Informatik (2018/2019)", "Übungsblätter", "$-aufgaben", "Grundbegriffe der Informatik")
 
 def create_profile():
 
@@ -77,7 +76,7 @@ def switch_to_first_tab(driver):
 @click.argument('assignment_num')
 #@click.option('-la', is_flag=True)
 @click.argument('class_names', nargs=-1, type=click.Choice(['la', 'gbi', 'prg']))
-def main(assignment_num: str, class_names):
+def main(assignment_num: int, class_names):
 
 	lecture = globals()[class_names[0]]
 	print(lecture.assignment)
@@ -102,8 +101,13 @@ def main(assignment_num: str, class_names):
 		switch_to_last_tab(driver)
 		# Click on the assignments folder
 		click_link(driver, wait, lecture.assignment)
-		# Download assignment
-		click_link(driver, wait, lecture.frmt)
+		# Download assignments
+		for num in range(1, int(assignment_num) + 1):
+			# Retrieve the assignment name by replacing the 'frmt' variable of the lecture
+			# with the specified assignment number and append leading zeroes if necessary
+			assignment = lecture.frmt.replace("$", str(num).zfill(2))
+			click_link(driver, wait, assignment)
+
 		switch_to_first_tab(driver)
 	
 	print('Success')
