@@ -6,7 +6,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
+import threading
 import click
+import time
 
 class Lecture:
 
@@ -18,8 +20,8 @@ class Lecture:
 
 ilias_main = "https://ilias.studium.kit.edu"
 root_path = "G:\\KIT\\Sonstiges\\WS18-19" 
-la = Lecture("Lineare Algebra 1", "Übungen", "Blatt$$", "Lineare Algebra I")
-gbi = Lecture("Grundbegriffe der Informatik (2018/2019)", "Übungsblätter", "$$-aufgaben", "Grundbegriffe der Informatik")
+la = Lecture("Lineare Algebra 1", "Übungen", "Blatt09", "Lineare Algebra I")
+gbi = Lecture("Grundbegriffe der Informatik (2018/2019)", "Übungsblätter", "09-aufgaben", "Grundbegriffe der Informatik")
 
 def create_profile():
 
@@ -50,21 +52,26 @@ def create_profile():
 def path_of(name: str):
 	return "//a[text()='{}' and @class='il_ContainerItemTitle']".format(name)
 
-def click_link(driver, wait: WebDriverWait, name: str, actions: ActionChains=None):
+def click_link(driver, wait: WebDriverWait, name: str, new_tab=False):
 	link = wait.until(EC.element_to_be_clickable((By.XPATH, path_of(name))))
-	if actions is not None:
+	if new_tab:
+		actions = ActionChains(driver)
 		actions.key_down(Keys.CONTROL).click(link).key_up(Keys.CONTROL).perform()
-	else: 
-		link.click()
+	# Click on link without scrolling
+	else: driver.execute_script("arguments[0].click();", link)
 
-	driver.implicitly_wait(5)
-	print(len(driver.window_handles))
-	# Set the driver to the new tab
+def switch_to_last_tab(driver):
+	# Wait until site has loaded
+	tabs_before = len(driver.window_handles)
+	while len(driver.window_handles) == tabs_before:
+		time.sleep(0.25)
+	# Switch to the new tab
 	driver.switch_to.window(driver.window_handles[-1])
 
-def first_tab(actions: ActionChains):
-	actions.key_down(Keys.CONTROL).key_down(Keys.NUMPAD1).key_up(Keys.TAB).key_up(Keys.NUMPAD1).perform()
-
+def switch_to_first_tab(driver):
+	actions = ActionChains(driver)
+	actions.key_down(Keys.CONTROL).key_up(Keys.CONTROL).perform()
+	driver.switch_to.window(driver.window_handles[0])
 
 @click.command()
 @click.argument('assignment_num')
@@ -88,18 +95,16 @@ def main(assignment_num: str, class_names):
 	driver.find_element_by_id('password').send_keys('sccK1t!?com', Keys.ENTER)
 
 	wait = WebDriverWait(driver, 10)
-	actions = ActionChains(driver)
 	for name in class_names:
 		lecture = globals()[name]
-		# Open the link in a new tab and move to it (see create_profile())
-		click_link(driver, wait, lecture.name, actions)
+		# Open the lecture in a new tab (and switch to it as specified in firefox preferences)
+		click_link(driver, wait, lecture.name, True)
+		switch_to_last_tab(driver)
 		# Click on the assignments folder
-		#click_link(driver, wait, lecture.assignment)
-		# Find assignment and download it
-		#assignment = driver.find_element_by_xpath(path_of("Blatt0{}".format(assignment_num)))
-		#driver.execute_script("arguments[0].click();", assignment)
-		# Move to first tab
-		#first_tab(actions)
+		click_link(driver, wait, lecture.assignment)
+		# Download assignment
+		click_link(driver, wait, lecture.frmt)
+		switch_to_first_tab(driver)
 	
 	print('Success')
 	#driver.close()
