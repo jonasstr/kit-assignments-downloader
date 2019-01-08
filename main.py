@@ -1,14 +1,15 @@
 from selenium import webdriver
+import traceback
 
+import yaml
 import click
 import time
 from scraper import Scraper
 from lecture import Lecture
 
-root_path = "G:\\KIT\\Sonstiges\\WS18-19" 
-classes = {}
-classes['la'] = Lecture("Lineare Algebra 1", "Übungen", "Blatt$", "Lineare Algebra I")
-classes['gbi'] = Lecture("Grundbegriffe der Informatik (2018/2019)", "Übungsblätter", "$-aufgaben", "Grundbegriffe der Informatik")
+with open("config.yml") as config:
+	data = yaml.safe_load(config)
+	classes = data['classes']
 
 def create_profile():
 
@@ -45,16 +46,19 @@ def create_profile():
 def main(assignment_num: int, class_names, all):
 
 	driver = webdriver.Firefox(firefox_profile=create_profile())	
-	
-	try:
-		scraper = Scraper(driver, root_path)
-		scraper.to_home()
+	print("CLASS: " + list(classes))
 
-		scraper.download(classes['la'], 9)
-	except:
+	try:
+		scraper = Scraper(driver, data['root_path'])
+		#scraper.to_home()
+		print(data['classes'])
+		for name in class_names:
+			# TODO: CHANGE METHOD SIGNATURE
+			scraper.download(class_names, classes[name])
+	except Exception as e:
+		traceback.print_exc()
 		# Close for testing purposes
 		driver.close()
 
 if __name__ == '__main__':
 	main()
-	

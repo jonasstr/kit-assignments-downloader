@@ -4,6 +4,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
+import yaml
 import time
 import click
 import logger
@@ -24,9 +25,13 @@ class Scraper:
 			# Click on login buttons
 			self.driver.find_element_by_link_text('Anmelden').click()
 			self.driver.find_element_by_id('f807').click()
-			# Fill in login credentials and login
-			self.driver.find_element_by_id('name').send_keys('uzxhf')
-			self.driver.find_element_by_id('password').send_keys('sccK1t!?com', Keys.ENTER)
+		
+			with open("config.yml") as config:
+				data = yaml.safe_load(config)
+				print(data)
+				# Fill in login credentials and login
+				self.driver.find_element_by_id('name').send_keys(data['user_name'])
+				self.driver.find_element_by_id('password').send_keys(data['password'], Keys.ENTER)
 
 	def path_of(self, name: str):
 		return "//a[text()='{}' and @class='il_ContainerItemTitle']".format(name)

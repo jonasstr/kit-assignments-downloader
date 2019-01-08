@@ -3,7 +3,7 @@ class ProgressBar:
 
 	def __init__(self, message, suffix=False):
 		self.output = "\r" + message
-		self.done = ": Done." if suffix else ""
+		self.done = ", done." if suffix else ""
 		print(self.output, end="", flush=True)
 
 	def __enter__(self):
