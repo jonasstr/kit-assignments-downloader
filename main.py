@@ -7,9 +7,9 @@ import time
 from scraper import Scraper
 from lecture import Lecture
 
-with open("config.yml") as config:
+with open("config.yml", encoding='utf-8') as config:
 	data = yaml.safe_load(config)
-	classes = data['classes']
+	all_classes = data['classes']
 
 def create_profile():
 
@@ -41,20 +41,18 @@ def create_profile():
 
 @click.command()
 @click.argument('assignment_num')
-@click.argument('class_names', nargs=-1, required=False, type=click.Choice(classes))
+@click.argument('class_names', nargs=-1, required=False, type=click.Choice(all_classes))
 @click.option("--all", "-a", is_flag=True, default=True, help="Download assignments from all specified classes.")
 def main(assignment_num: int, class_names, all):
 
 	driver = webdriver.Firefox(firefox_profile=create_profile())	
-	print("CLASS: " + list(classes))
-
 	try:
 		scraper = Scraper(driver, data['root_path'])
-		#scraper.to_home()
-		print(data['classes'])
+		scraper.to_home()
 		for name in class_names:
-			# TODO: CHANGE METHOD SIGNATURE
-			scraper.download(class_names, classes[name])
+			scraper.download(all_classes[name], assignment_num)
+			#scraper.switch_to_first_tab()
+
 	except Exception as e:
 		traceback.print_exc()
 		# Close for testing purposes
@@ -62,3 +60,4 @@ def main(assignment_num: int, class_names, all):
 
 if __name__ == '__main__':
 	main()
+ 

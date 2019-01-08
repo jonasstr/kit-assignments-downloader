@@ -13,7 +13,7 @@ class Scraper:
 
 	def __init__(self, driver, root_path):
 		self.driver = driver
-		self.wait = WebDriverWait(self.driver, 10)
+		self.wait = WebDriverWait(self.driver, 15)
 		self.main_page = "https://ilias.studium.kit.edu"
 		self.root_path = root_path
 
@@ -28,7 +28,6 @@ class Scraper:
 		
 			with open("config.yml") as config:
 				data = yaml.safe_load(config)
-				print(data)
 				# Fill in login credentials and login
 				self.driver.find_element_by_id('name').send_keys(data['user_name'])
 				self.driver.find_element_by_id('password').send_keys(data['password'], Keys.ENTER)
@@ -55,27 +54,29 @@ class Scraper:
 	def switch_to_first_tab(self):
 		actions = ActionChains(self.driver)
 		actions.key_down(Keys.CONTROL).key_up(Keys.CONTROL).perform()
+		time.sleep(4)
 		self.driver.switch_to.window(self.driver.window_handles[0])
 
-	def download(self, lecture, assignment_num):
+	def download(self, class_, assignment_num):
 		'''
-		Downloads the specified assignment of the given lecture.
-		'''
-		# Retrieve the assignment name by replacing the 'frmt' variable of the lecture
+		Downloads the specified assignment of the given class.
+		'''		# Retrieve the assignment name by replacing the 'format' variable of the class dictionary
 		# with the specified assignment number and append leading zeroes if necessary
-		assignment = lecture.frmt.replace("$", str(assignment_num).zfill(2))
-		with logger.bar("Downloading '{}' from '{}'".format(assignment, lecture.name), True):
-			# Open the lecture in a new tab (and switch to it as specified in firefox preferences)
-			self.click_link(lecture.name, True)
+		assignment = class_['assignment']['format'].replace("$", str(assignment_num).zfill(2))
+		with logger.bar("Downloading '{}' from '{}'".format(assignment, class_['name']), True):
+			# Open the class page in a new tab (and switch to it as specified in firefox preferences)
+			self.click_link(class_['name'], True)
 			self.switch_to_last_tab()
 			# Click on the assignments folder
-			self.click_link(lecture.assignment_num)
+			self.click_link(class_['assignment']['name'])
 			# Download the assigment
 			self.click_link(assignment)
+			# Close this tab
+			self.driver.close()
 
-	def download_all_of(self, all_classes, classes):
-		classes_to_iterate = all_classes if all else classes
-		for name in classes_to_iterate:
+	def download_all_of(self, classes, assignment_num):
+		#classes_to_iterate = all_classes if all else classes
+		for name in classes:
 			lecture = all_classes[name]
 			self.download(self.wait, lecture, assignment_num)
 			# Download assignments
