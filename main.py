@@ -1,6 +1,7 @@
 from selenium import webdriver
 
 import click
+import time
 from scraper import Scraper
 from lecture import Lecture
 
@@ -48,7 +49,7 @@ def main(assignment_num: int, class_names, all):
 	scraper.to_home()
 
 	scraper.download(classes['la'], 9)
-	print("Done.")
+	print("Test output")
 	driver.close()
 
 if __name__ == '__main__':

@@ -6,6 +6,7 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 import time
 import click
+from progressbar import ProgressBar
 
 class Scraper:
 
@@ -16,17 +17,19 @@ class Scraper:
 		self.root_path = root_path
 
 	def to_home(self):
-		click.echo("Opening main page...")
+		bar = ProgressBar("Opening main page..")
 		self.driver.get(self.main_page)
+		bar.complete()
 		
 		# Click on login buttons
 		self.driver.find_element_by_link_text('Anmelden').click()
 		self.driver.find_element_by_id('f807').click()
 		
-		click.echo("Logging in...")
+		bar = ProgressBar("Logging in..")
 		# Fill in login credentials and login
 		self.driver.find_element_by_id('name').send_keys('uzxhf')
 		self.driver.find_element_by_id('password').send_keys('sccK1t!?com', Keys.ENTER)
+		bar.complete()
 
 	def path_of(self, name: str):
 		return "//a[text()='{}' and @class='il_ContainerItemTitle']".format(name)
@@ -56,7 +59,7 @@ class Scraper:
 		'''
 		Downloads the specified assignment of the given lecture.
 		'''
-		click.echo("Downloading assignment {} from class '{}'...".format(assignment_num, lecture.name))
+		bar = ProgressBar("Downloading assignment {} from class '{}'".format(assignment_num, lecture.name), True)
 		# Open the lecture in a new tab (and switch to it as specified in firefox preferences)
 		self.click_link(lecture.name, True)
 		self.switch_to_last_tab()
@@ -67,6 +70,7 @@ class Scraper:
 		# with the specified assignment number and append leading zeroes if necessary
 		assignment = lecture.frmt.replace("$", str(assignment_num).zfill(2))
 		self.click_link(assignment)
+		bar.complete()
 
 	def download_all_of(self, all_classes, classes):
 		classes_to_iterate = all_classes if all else classes
