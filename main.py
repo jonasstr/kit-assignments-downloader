@@ -45,12 +45,16 @@ def create_profile():
 def main(assignment_num: int, class_names, all):
 
 	driver = webdriver.Firefox(firefox_profile=create_profile())	
-	scraper = Scraper(driver, root_path)
-	scraper.to_home()
+	
+	try:
+		scraper = Scraper(driver, root_path)
+		scraper.to_home()
 
-	scraper.download(classes['la'], 9)
-	print("Test output")
-	driver.close()
+		scraper.download(classes['la'], 9)
+	except:
+		# Close for testing purposes
+		driver.close()
 
 if __name__ == '__main__':
 	main()
+	
