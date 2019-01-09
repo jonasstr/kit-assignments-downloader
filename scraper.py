@@ -11,11 +11,12 @@ import logger
 
 class Scraper:
 
-	def __init__(self, driver, root_path):
+	def __init__(self, driver, root_path, logger):
 		self.driver = driver
 		self.wait = WebDriverWait(self.driver, 15)
 		self.main_page = "https://ilias.studium.kit.edu"
 		self.root_path = root_path
+		self.logger = logger
 
 	def to_home(self):
 		with logger.bar("Opening main page.."):
@@ -47,7 +48,7 @@ class Scraper:
 		# Wait until site has loaded
 		tabs_before = len(self.driver.window_handles)
 		while len(self.driver.window_handles) == tabs_before:
-			time.sleep(0.25)
+			time.sleep(0.2)
 		# Switch to the new tab
 		self.driver.switch_to.window(self.driver.window_handles[-1])
 
@@ -64,6 +65,7 @@ class Scraper:
 		# with the specified assignment number and append leading zeroes if necessary
 		assignment = class_['assignment']['format'].replace("$", str(assignment_num).zfill(2))
 		with logger.bar("Downloading '{}' from '{}'".format(assignment, class_['name']), True):
+			print("LENGTH::" + str(len(self.driver.window_handles)))
 			# Open the class page in a new tab (and switch to it as specified in firefox preferences)
 			self.click_link(class_['name'], True)
 			self.switch_to_last_tab()
@@ -71,8 +73,8 @@ class Scraper:
 			self.click_link(class_['assignment']['name'])
 			# Download the assigment
 			self.click_link(assignment)
+			time.sleep(2)
 			# Close this tab
-			self.driver.close()
 
 	def download_all_of(self, classes, assignment_num):
 		#classes_to_iterate = all_classes if all else classes

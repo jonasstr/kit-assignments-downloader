@@ -1,3 +1,5 @@
+import logging
+from logging.handlers import RotatingFileHandler
 
 class ProgressBar:
 
@@ -16,3 +18,18 @@ class ProgressBar:
 
 def bar(message, suffix=False):
 	return ProgressBar(message, suffix)
+
+class Logger:
+
+	def __init__(self):
+		logger = logging.getLogger("Application log")
+		logger.setLevel(logging.ERROR)
+		handler = RotatingFileHandler("app.log", maxBytes=10000)
+		formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+		handler.setFormatter(formatter)
+		logger.addHandler(handler)
+		self.logger = logger
+
+	def log(self, exc_type, format_exc):
+		self.logger.error(exc_type)
+		self.logger.error(format_exc)
