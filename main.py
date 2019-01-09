@@ -1,4 +1,6 @@
 from selenium import webdriver
+import logging
+from logging.handlers import RotatingFileHandler
 import traceback
 
 import yaml
@@ -39,12 +41,22 @@ def create_profile():
 	profile.set_preference("browser.tabs.loadInBackground", False)
 	return profile
 
+def create_logger():
+	logger = logging.getLogger("Rotating Log")
+	logger.setLevel(logging.ERROR)
+	handler = RotatingFileHandler("app.log", maxBytes=10000)
+	formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+	handler.setFormatter(formatter)
+	logger.addHandler(handler)
+	return logger
+
 @click.command()
 @click.argument('assignment_num')
 @click.argument('class_names', nargs=-1, required=False, type=click.Choice(all_classes))
 @click.option("--all", "-a", is_flag=True, default=True, help="Download assignments from all specified classes.")
 def main(assignment_num: int, class_names, all):
 
+	logger = create_logger()
 	driver = webdriver.Firefox(firefox_profile=create_profile())	
 	try:
 		scraper = Scraper(driver, data['root_path'])
@@ -54,7 +66,9 @@ def main(assignment_num: int, class_names, all):
 			#scraper.switch_to_first_tab()
 
 	except Exception as e:
-		traceback.print_exc()
+		#traceback.print_exc()
+		logger.error(str(e))
+		logger.error(traceback.format_exc())
 		# Close for testing purposes
 		driver.close()
 
