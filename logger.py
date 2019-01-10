@@ -14,7 +14,7 @@ class ProgressBar:
 	def __exit__(self, exc_type, exc_value, tb):
 		if exc_type is not None:
 			self.done = ", cancelled!"
-		print(self.output + self.done, end="\n", flush=False).decode('utf-8')
+		print(self.output + self.done, end="\n", flush=False)
 
 def bar(message, suffix=False):
 	return ProgressBar(message, suffix)

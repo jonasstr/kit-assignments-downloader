@@ -16,6 +16,13 @@ class Scraper:
 		self.main_page = "https://ilias.studium.kit.edu"
 		self.root_path = root_path
 		self.logger = logger
+		print(self.driver.current_url)
+
+	def on_any_page(self):
+		try:
+			return not self.driver.current_url == 'about:blank'
+		except Exception as e:
+			return False
 
 	def to_home(self):
 		with logger.bar("Opening main page.."):
@@ -51,6 +58,10 @@ class Scraper:
 		# Switch to the new tab
 		self.driver.switch_to.window(self.driver.window_handles[-1])
 
+	def get_link_name(self, format, assignment_num):
+		num_digits = format.count('$')
+		return format.replace('$' * num_digits, str(assignment_num).zfill(num_digits))
+
 	def download(self, class_, assignment_num):
 		'''
 		Downloads the specified assignment of the given class.
@@ -60,19 +71,15 @@ class Scraper:
 		format = class_['assignment']['format']
 		# Split (optional) path in format
 		values = format.split('/')
-		# If specified, the path comes before the assignment
 		path = values[0] if len(values) == 2 else ''
 		# If the path has been specifed, the assignment is at [1]
 		assignment = values[0] if len(values) == 1 else values[1]
 			
 		if len(values) > 1:
-			num_digits = path.count('$')
-			path = path.replace('$' * num_digits, str(assignment_num).zfill(num_digits))
-		
-		num_digits = assignment.count('$')
-		assignment = assignment.replace('$' * num_digits, str(assignment_num).zfill(num_digits))
+			path = self.get_link_name(path, assignment_num)
+		assignment = self.get_link_name(assignment, assignment_num)
 
-		with logger.bar("Downloading '{}' from '{}'".format(path + "/" + assignment, class_['name']), True):
+		with logger.bar("Downloading '{}' from '{}'".format(assignment, class_['name']), True):
 			# Open the class page in a new tab (and switch to it as specified in firefox preferences)
 			self.click_link(class_['name'], True)
 			self.switch_to_last_tab()
@@ -89,3 +96,17 @@ class Scraper:
 			# Close this tab
 			self.driver.close()
 			self.driver.switch_to.window(self.driver.window_handles[0])
+
+	def download_from(self, class_, assignment_num):
+
+		with logger.bar("Opening page.."):
+			self.driver.get(class_['link'])
+		
+		format = class_['assignment']['format']
+		assignment = self.get_link_name(format, assignment_num)
+
+		with logger.bar("Downloading '{}' from '{}'".format(assignment, class_['name']), True):
+			self.driver.find_element_by_link_text(assignment).click()
+			time.sleep(1)
+			# Close this tab
+			self.driver.close()

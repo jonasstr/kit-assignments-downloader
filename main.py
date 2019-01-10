@@ -46,10 +46,18 @@ def main(assignment_num: int, class_names, all):
 	driver = webdriver.Firefox(firefox_profile=create_profile())	
 	try:
 		scraper = Scraper(driver, data['root_path'], logger)
-		scraper.to_home()
+		#scraper.to_home()
 		classes_to_iterate = all_classes if all else class_names
 		for name in classes_to_iterate:
+			print("Name: " + name)
+			if not scraper.on_any_page():
+				print("Not on page")
+				if 'link' in all_classes[name]:
+					scraper.download_from(all_classes[name], assignment_num)
+				else: scraper.to_home()
+				continue
 			scraper.download(all_classes[name], assignment_num)
+				
 		
 	except Exception as e:
 		print(str(e))
