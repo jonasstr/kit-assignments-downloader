@@ -6,7 +6,6 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
 import yaml
 import time
-import click
 import logger
 
 class Scraper:
@@ -55,15 +54,35 @@ class Scraper:
 	def download(self, class_, assignment_num):
 		'''
 		Downloads the specified assignment of the given class.
-		'''		# Retrieve the assignment name by replacing the 'format' variable of the class dictionary
+		'''		
+		# Retrieve the assignment name by replacing the 'format' variable of the class dictionary
 		# with the specified assignment number and append leading zeroes if necessary
-		assignment = class_['assignment']['format'].replace("$", str(assignment_num).zfill(2))
-		with logger.bar("Downloading '{}' from '{}'".format(assignment, class_['name']), True):
+		format = class_['assignment']['format']
+		# Split (optional) path in format
+		values = format.split('/')
+		# If specified, the path comes before the assignment
+		path = values[0] if len(values) == 2 else ''
+		# If the path has been specifed, the assignment is at [1]
+		assignment = values[0] if len(values) == 1 else values[1]
+			
+		if len(values) > 1:
+			num_digits = path.count('$')
+			path = path.replace('$' * num_digits, str(assignment_num).zfill(num_digits))
+		
+		num_digits = assignment.count('$')
+		assignment = assignment.replace('$' * num_digits, str(assignment_num).zfill(num_digits))
+
+		with logger.bar("Downloading '{}' from '{}'".format(path + "/" + assignment, class_['name']), True):
 			# Open the class page in a new tab (and switch to it as specified in firefox preferences)
 			self.click_link(class_['name'], True)
 			self.switch_to_last_tab()
 			# Click on the assignments folder
 			self.click_link(class_['assignment']['name'])
+
+			if path:
+				# Click on the additional folder (if specified)
+				self.click_link(path)
+
 			# Download the assigment
 			self.click_link(assignment)
 			time.sleep(1)

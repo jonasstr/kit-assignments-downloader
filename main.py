@@ -1,13 +1,10 @@
 from selenium import webdriver
 from logger import Logger
 from logging.handlers import RotatingFileHandler
-import traceback
-
+from scraper import Scraper
 import yaml
 import click
-import time
-from scraper import Scraper
-from lecture import Lecture
+import traceback
 
 with open("config.yml", encoding='utf-8') as config:
 	data = yaml.safe_load(config)
