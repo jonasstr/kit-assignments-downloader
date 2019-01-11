@@ -4,6 +4,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
+import traceback
 import yaml
 import time
 import logger
@@ -12,7 +13,7 @@ class Scraper:
 
 	def __init__(self, driver, root_path, logger):
 		self.driver = driver
-		self.wait = WebDriverWait(self.driver, 10)
+		self.wait = WebDriverWait(self.driver, 3)
 		self.main_page = "https://ilias.studium.kit.edu"
 		self.root_path = root_path
 		self.logger = logger
@@ -80,22 +81,30 @@ class Scraper:
 		assignment = self.get_link_name(assignment, assignment_num)
 
 		with logger.bar("Downloading '{}' from '{}'".format(assignment, class_['name']), True):
-			# Open the class page in a new tab (and switch to it as specified in firefox preferences)
-			self.click_link(class_['name'], True)
-			self.switch_to_last_tab()
-			# Click on the assignments folder
-			self.click_link(class_['assignment']['name'])
 
-			if path:
-				# Click on the additional folder (if specified)
-				self.click_link(path)
+			try:
+				# Open the class page in a new tab (and switch to it as specified in firefox preferences)
+				self.click_link(class_['name'], True)
+				self.switch_to_last_tab()
+				# Click on the assignments folder
+				self.click_link(class_['assignment']['name'])
 
-			# Download the assigment
-			self.click_link(assignment)
-			time.sleep(1)
-			# Close this tab
-			self.driver.close()
-			self.driver.switch_to.window(self.driver.window_handles[0])
+				if path:
+					# Click on the additional folder (if specified)
+					self.click_link(path)
+
+				# Download the assigment
+				self.click_link(assignment)
+				time.sleep(1)
+				# Close this tab
+				self.driver.close()
+				self.driver.switch_to.window(self.driver.window_handles[0])
+
+			except Exception as e:
+				print(e)
+				print(traceback.format_exc())
+				logger.bar("Assignment could not be found!")
+
 
 	def download_from(self, class_, assignment_num):
 

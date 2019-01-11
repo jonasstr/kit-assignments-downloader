@@ -12,7 +12,7 @@ class ProgressBar:
 		pass
 
 	def __exit__(self, exc_type, exc_value, tb):
-		if exc_type is not None:
+		if exc_type is not None or exc_value is not None or tb is not None:
 			self.done = ", cancelled!"
 		print(self.output + self.done, end="\n", flush=False)
 

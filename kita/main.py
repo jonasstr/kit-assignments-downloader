@@ -1,7 +1,8 @@
 from selenium import webdriver
 from logger import Logger
 from logging.handlers import RotatingFileHandler
-from scraper import Scraper
+from selenium.webdriver.firefox.options import Options
+import kita
 import yaml
 import click
 import traceback
@@ -9,6 +10,11 @@ import traceback
 with open("config.yml", encoding='utf-8') as config:
 	data = yaml.safe_load(config)
 	all_classes = data['classes']
+
+def get_options():
+	options = Options()
+	options.headless = True
+	return options
 
 def create_profile():
 
@@ -40,29 +46,29 @@ def create_profile():
 @click.argument('assignment_num')
 @click.argument('class_names', nargs=-1, required=False, type=click.Choice(all_classes))
 @click.option("--all", "-a", is_flag=True, help="Download assignments from all specified classes.")
-def main(assignment_num: int, class_names, all):
+@click.option("--headless/--visible", "-h/-v", default=True,  help="Start the browser in headless mode (no visible UI).")
+def main(assignment_num: int, class_names, all, headless):
 
 	logger = Logger()
-	driver = webdriver.Firefox(firefox_profile=create_profile())	
+	driver = webdriver.Firefox(firefox_profile=create_profile(), options=get_options() if headless else None)
+
 	try:
-		scraper = Scraper(driver, data['root_path'], logger)
-		#scraper.to_home()
+		scraper = kita.Scraper(driver, data['root_path'], logger)
 		classes_to_iterate = all_classes if all else class_names
 		for name in classes_to_iterate:
-			print("Name: " + name)
 			if not scraper.on_any_page():
-				print("Not on page")
 				if 'link' in all_classes[name]:
 					scraper.download_from(all_classes[name], assignment_num)
+					continue
 				else: scraper.to_home()
-				continue
 			scraper.download(all_classes[name], assignment_num)
 				
-		
 	except Exception as e:
-		print(str(e))
+		print("EXCEPTION IN MAIN:")
+		print(e)
 		print(traceback.format_exc())
-		logger.log(e, traceback.format_exc())
+		print("/END EXCEPTION")
+		#logger.log(e, traceback.format_exc())
 		# Close for testing purposes
 		driver.close()
 
