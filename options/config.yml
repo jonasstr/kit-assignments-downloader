@@ -1,0 +1,33 @@
+user_name: uzxhf
+password: sccK1t!?com
+
+root_path: G:\KIT\Sonstiges\WS18-19
+
+classes:
+  la:
+    name: Lineare Algebra 1
+    path: Lineare Algebra I
+    assignment:
+      name: Übungen
+      format: Blatt$$
+
+  gbi:
+    name: Grundbegriffe der Informatik (2018/2019)
+    path: Grundbegriffe der Informatik
+    assignment:
+      name: Übungsblätter
+      format: $$-aufgaben
+
+  prg:
+    name: Programmieren
+    path: Programmieren
+    assignment:
+      name: Übungen
+      format: Übungsblatt $/assignment$$
+
+  hm:
+    name: Höhere Mathematik
+    link: http://www.math.kit.edu/iana2/edu/hm1info2018w/de
+    path: Höhere Mathematik I
+    assignment:
+      format: Blatt $
