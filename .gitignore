@@ -1,5 +1,8 @@
-*.log
-log.txt
-geckodriver.txt
-user.yml
+# Python files
 __pycache__/
+
+# Log files
+*.log
+geckodriver.txt
+
+config.yml

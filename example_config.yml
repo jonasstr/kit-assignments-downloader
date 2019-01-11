@@ -1,7 +1,7 @@
-user_name: uzxhf
-password: sccK1t!?com
+user_name: name
+password: password
 
-root_path: G:\KIT\Sonstiges\WS18-19
+root_path: C:\Users\YourName\Documents\KIT
 
 classes:
   la:
@@ -26,7 +26,7 @@ classes:
       format: Übungsblatt $/assignment$$
 
   hm:
-    name: Höhere Mathematik
+    name: Höhere Mathematik 1
     link: http://www.math.kit.edu/iana2/edu/hm1info2018w/de
     path: Höhere Mathematik I
     assignment:
