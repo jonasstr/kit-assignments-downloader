@@ -87,7 +87,7 @@ class Scraper:
 			self.click_link(class_['name'], True)
 			self.switch_to_last_tab()
 			# Click on the assignments folder
-			self.click_link(class_['assignment']['name'])
+			self.click_link(class_['assignment']['link_name'])
 			if path:
 				# Click on the additional folder (if specified)
 				self.click_link(path)

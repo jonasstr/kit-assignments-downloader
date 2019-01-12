@@ -5,7 +5,10 @@ import logging
 class ProgressBar:
 
 	def reformat(self, value):
-		return value.replace('ä', 'ae').replace('ö', 'oe').replace('ü', 'ue')
+		chars = {'Ä':'Ae','Ö':'Oe','Ü':'Ue','ä':'ae','ö':'oe','ü':'ue'}
+		for char in chars:
+			value = value.replace(char, chars[char])
+		return value
 
 	def __init__(self, message, suffix=False):
 		self.output = "\r" + self.reformat(message)
