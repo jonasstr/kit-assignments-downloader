@@ -6,6 +6,8 @@ import kita
 import yaml
 import click
 import traceback
+import logging
+import sys
 
 with open("config.yml", encoding='utf-8') as config:
 	data = yaml.safe_load(config)
@@ -49,12 +51,13 @@ def create_profile():
 @click.option("--headless/--visible", "-h/-v", default=True,  help="Start the browser in headless mode (no visible UI).")
 def main(assignment_num: int, class_names, all, headless):
 
-	logger = Logger()
+	#logger = Logger()
 	driver = webdriver.Firefox(firefox_profile=create_profile(), options=get_options() if headless else None)
 
+	scraper = kita.Scraper(driver, data['root_path'])
+	classes_to_iterate = all_classes if all else class_names
+
 	try:
-		scraper = kita.Scraper(driver, data['root_path'], logger)
-		classes_to_iterate = all_classes if all else class_names
 		for name in classes_to_iterate:
 			if not scraper.on_any_page():
 				if 'link' in all_classes[name]:
@@ -62,15 +65,11 @@ def main(assignment_num: int, class_names, all, headless):
 					continue
 				else: scraper.to_home()
 			scraper.download(all_classes[name], assignment_num)
-				
-	except Exception as e:
-		print("EXCEPTION IN MAIN:")
-		print(e)
-		print(traceback.format_exc())
-		print("/END EXCEPTION")
-		#logger.log(e, traceback.format_exc())
-		# Close for testing purposes
-		driver.close()
+
+	except:
+		print("Assignment could not be found!")
+	finally:
+		driver.quit()
 
 if __name__ == '__main__':
 	main()

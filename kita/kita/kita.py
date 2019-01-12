@@ -11,13 +11,11 @@ import logger
 
 class Scraper:
 
-	def __init__(self, driver, root_path, logger):
+	def __init__(self, driver, root_path):
 		self.driver = driver
-		self.wait = WebDriverWait(self.driver, 3)
+		self.wait = WebDriverWait(self.driver, 4)
 		self.main_page = "https://ilias.studium.kit.edu"
 		self.root_path = root_path
-		self.logger = logger
-		print(self.driver.current_url)
 
 	def on_any_page(self):
 		try:
@@ -44,12 +42,15 @@ class Scraper:
 		return "//a[text()='{}' and @class='il_ContainerItemTitle']".format(name)
 
 	def click_link(self, name: str, new_tab=False):
-		link = self.wait.until(EC.element_to_be_clickable((By.XPATH, self.path_of(name))))
-		if new_tab:
-			actions = ActionChains(self.driver)
-			actions.key_down(Keys.CONTROL).click(link).key_up(Keys.CONTROL).perform()
-		# Click on link without scrolling
-		else: self.driver.execute_script("arguments[0].click();", link)
+		try:
+			link = self.wait.until(EC.element_to_be_clickable((By.XPATH, self.path_of(name))))
+			if new_tab:
+				actions = ActionChains(self.driver)
+				actions.key_down(Keys.CONTROL).click(link).key_up(Keys.CONTROL).perform()
+			# Click on link without scrolling
+			else: self.driver.execute_script("arguments[0].click();", link)
+		except:
+			raise#raise Exception("Assignment could not be found!")
 
 	def switch_to_last_tab(self):
 		# Wait until site has loaded
@@ -82,29 +83,24 @@ class Scraper:
 
 		with logger.bar("Downloading '{}' from '{}'".format(assignment, class_['name']), True):
 
-			try:
-				# Open the class page in a new tab (and switch to it as specified in firefox preferences)
-				self.click_link(class_['name'], True)
-				self.switch_to_last_tab()
-				# Click on the assignments folder
-				self.click_link(class_['assignment']['name'])
-
-				if path:
-					# Click on the additional folder (if specified)
-					self.click_link(path)
-
-				# Download the assigment
-				self.click_link(assignment)
-				time.sleep(1)
-				# Close this tab
-				self.driver.close()
-				self.driver.switch_to.window(self.driver.window_handles[0])
-
-			except Exception as e:
-				print(e)
-				print(traceback.format_exc())
-				logger.bar("Assignment could not be found!")
-
+			# Open the class page in a new tab (and switch to it as specified in firefox preferences)
+			self.click_link(class_['name'], True)
+			self.switch_to_last_tab()
+			#print("LOG: Click on the assignments folder")
+			# Click on the assignments folder
+			self.click_link(class_['assignment']['name'])
+			if path:
+				#print("LOG: Click on the additional folder (if specified): " + path)
+				# Click on the additional folder (if specified)
+				self.click_link(path)
+			#print("LOG: Download the assigment")
+			# Download the assigment
+			self.click_link(assignment)
+			time.sleep(1)
+			#print("LOG: Close this tab")
+			# Close this tab
+			self.driver.close()
+			self.driver.switch_to.window(self.driver.window_handles[0])
 
 	def download_from(self, class_, assignment_num):
 

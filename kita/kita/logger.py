@@ -1,4 +1,5 @@
 from logging.handlers import RotatingFileHandler
+from selenium.common.exceptions import TimeoutException
 import logging
 
 class ProgressBar:
@@ -12,9 +13,9 @@ class ProgressBar:
 		pass
 
 	def __exit__(self, exc_type, exc_value, tb):
-		if exc_type is not None or exc_value is not None or tb is not None:
+		if isinstance(exc_value, TimeoutException):
 			self.done = ", cancelled!"
-		print(self.output + self.done, end="\n", flush=False)
+		print(self.done, end="\n", flush=False)
 
 def bar(message, suffix=False):
 	return ProgressBar(message, suffix)
@@ -23,6 +24,7 @@ class Logger:
 
 	def __init__(self):
 		logger = logging.getLogger("Application log")
+		logger.handlers=[]
 		logger.setLevel(logging.ERROR)
 		handler = RotatingFileHandler("app.log", maxBytes=10000)
 		formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
