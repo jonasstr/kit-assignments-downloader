@@ -116,15 +116,18 @@ class Scraper:
 
 	def move_and_rename(self, assignment, class_, assignment_num):
 
-		src = os.path.join(self.download_path, assignment + ".pdf")	
-		print("SRC: " + src)
-		print("SELF DST ÜÜÜ: " + str(self.dst))
-		print("SELF DST PATH ÄÄÄ: " + str(class_))
-		dst_folder = os.path.join(self.dst['root_path'], class_['path'])
-		print("DST FOLDER: " + src)
-		dst_file = os.path.join(dst_folder, self.format_assignment_name(self.dst['rename_format'], assignment_num) + ".pdf")
-		print("DST FILE: " + src)
+		# If the PDF file name is different from the download link name,
+		# this is specified as the 'file_format' value in the config file.
+		file_name = assignment
+		asgmt = class_['assignment']
+		if 'file_format' in asgmt:
+			file_name = self.format_assignment_name(asgmt['file_format'], assignment_num)
 
-		with logger.bar("Moving assignment to {}".format(dst_folder), True):
+		#print("FILE NAME: " + file_name)
+		src = os.path.join(self.download_path, file_name + ".pdf")	
+		dst_folder = os.path.join(self.dst['root_path'], class_['path'])
+		dst_file = os.path.join(dst_folder, self.format_assignment_name(self.dst['rename_format'], assignment_num) + ".pdf")
+
+		with logger.bar("Moving assignment to {}".format("root\\" + class_['path']), True):
 			shutil.move(src, dst_file)
 

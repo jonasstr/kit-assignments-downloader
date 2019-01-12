@@ -39,9 +39,9 @@ def create_profile():
 @click.command()
 @click.argument('class_names', nargs=-1, required=False, type=click.Choice(all_classes))
 @click.argument('assignment_num', required=False)
-@click.option('--move', '-m', is_flag=True, default=True, help="Move the downloaded assignments to the specified directory and rename them.")
+@click.option('--move', '-mv', is_flag=True, help="Move the downloaded assignments to the specified directory and rename them.")
 @click.option('--all', '-a', is_flag=True, help="Download assignments from all specified classes.")
-@click.option('--headless/--visible', '-h/-v', default=True,  help="Start the browser in headless mode (no visible UI).")
+@click.option('--headless/--visible', '-hl/-v', default=True,  help="Start the browser in headless mode (no visible UI).")
 def main(class_names, assignment_num, move, all, headless):
 
 	try:
@@ -58,20 +58,20 @@ def main(class_names, assignment_num, move, all, headless):
 	
 	for name in classes_to_iterate:
 		try:
-			if 'link' in all_classes[name]:
-				scraper.download_from(all_classes[name], assignment_num)
-				continue
-			elif not scraper.on_any_page(): scraper.to_home()
 			class_ = all_classes[name]
-			assignment = scraper.download(class_, assignment_num)
+			assignment = None
+			if 'link' in all_classes[name]:
+				assignment = scraper.download_from(class_, assignment_num)
+			else:
+				if not scraper.on_any_page(): scraper.to_home()
+				assignment = scraper.download(class_, assignment_num)
 			if move:
 				scraper.move_and_rename(assignment, class_, assignment_num)
-		except (OSError, IOError):
+		except (IOError, OSError):
 			print("Invalid destination path for this assignment!")
 		except:
-			raise
 			print("Assignment could not be found!")
-	print("EXITING")
+	print("Exiting")
 	driver.quit()
 
 if __name__ == '__main__':
