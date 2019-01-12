@@ -4,8 +4,11 @@ import logging
 
 class ProgressBar:
 
+	def reformat(self, value):
+		return value.replace('ä', 'ae').replace('ö', 'oe').replace('ü', 'ue')
+
 	def __init__(self, message, suffix=False):
-		self.output = "\r" + message
+		self.output = "\r" + self.reformat(message)
 		self.done = ", done." if suffix else ""
 		print(self.output, end="", flush=True)
 

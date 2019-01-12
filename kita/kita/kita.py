@@ -4,18 +4,18 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.keys import Keys
-import traceback
+import time, logger, traceback
+import shutil, os
 import yaml
-import time
-import logger
 
 class Scraper:
 
-	def __init__(self, driver, root_path):
+	def __init__(self, driver, download_path, dst):
 		self.driver = driver
 		self.wait = WebDriverWait(self.driver, 4)
 		self.main_page = "https://ilias.studium.kit.edu"
-		self.root_path = root_path
+		self.download_path = download_path
+		self.dst = dst
 
 	def on_any_page(self):
 		try:
@@ -60,7 +60,7 @@ class Scraper:
 		# Switch to the new tab
 		self.driver.switch_to.window(self.driver.window_handles[-1])
 
-	def get_link_name(self, format, assignment_num):
+	def format_assignment_name(self, format, assignment_num):
 		num_digits = format.count('$')
 		return format.replace('$' * num_digits, str(assignment_num).zfill(num_digits))
 
@@ -78,8 +78,8 @@ class Scraper:
 		assignment = values[0] if len(values) == 1 else values[1]
 			
 		if len(values) > 1:
-			path = self.get_link_name(path, assignment_num)
-		assignment = self.get_link_name(assignment, assignment_num)
+			path = self.format_assignment_name(path, assignment_num)
+		assignment = self.format_assignment_name(assignment, assignment_num)
 
 		with logger.bar("Downloading '{}' from '{}'".format(assignment, class_['name']), True):
 
@@ -97,17 +97,34 @@ class Scraper:
 			# Close this tab
 			self.driver.close()
 			self.driver.switch_to.window(self.driver.window_handles[0])
+			# Return the name of the downloaded file
+			return assignment
 
 	def download_from(self, class_, assignment_num):
 
-		with logger.bar("Opening page.."):
+		with logger.bar("Opening page specified by link attribute.."):
 			self.driver.get(class_['link'])
 		
 		format = class_['assignment']['format']
-		assignment = self.get_link_name(format, assignment_num)
+		assignment = self.format_assignment_name(format, assignment_num)
 
 		with logger.bar("Downloading '{}' from '{}'".format(assignment, class_['name']), True):
 			self.driver.find_element_by_link_text(assignment).click()
 			time.sleep(1)
-			# Close this tab
-			self.driver.close()
+			# Return the name of the downloaded file
+			return assignment
+
+	def move_and_rename(self, assignment, class_, assignment_num):
+
+		src = os.path.join(self.download_path, assignment + ".pdf")	
+		print("SRC: " + src)
+		print("SELF DST ÜÜÜ: " + str(self.dst))
+		print("SELF DST PATH ÄÄÄ: " + str(class_))
+		dst_folder = os.path.join(self.dst['root_path'], class_['path'])
+		print("DST FOLDER: " + src)
+		dst_file = os.path.join(dst_folder, self.format_assignment_name(self.dst['rename_format'], assignment_num) + ".pdf")
+		print("DST FILE: " + src)
+
+		with logger.bar("Moving assignment to {}".format(dst_folder), True):
+			shutil.move(src, dst_file)
+
