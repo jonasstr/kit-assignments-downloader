@@ -19,15 +19,9 @@ def get_options():
 	return options
 
 def create_profile():
-
 	'''
 	Sets the Firefox preferences
 	'''
-	# Enable later!
-	#options = Options()
-	#options.headless = True
-	#options=options)
-
 	profile = webdriver.FirefoxProfile()
 	# Download to specified path
 	profile.set_preference("browser.download.folderList", 2)
@@ -45,31 +39,35 @@ def create_profile():
 	return profile
 
 @click.command()
-@click.argument('assignment_num')
 @click.argument('class_names', nargs=-1, required=False, type=click.Choice(all_classes))
+@click.argument('assignment_num', required=False)
 @click.option("--all", "-a", is_flag=True, help="Download assignments from all specified classes.")
 @click.option("--headless/--visible", "-h/-v", default=True,  help="Start the browser in headless mode (no visible UI).")
-def main(assignment_num: int, class_names, all, headless):
+def main(class_names, assignment_num, all, headless):
 
+	try:
+		if not all and not assignment_num:
+			int(assignment_num)
+	except (ValueError, TypeError):
+		print("Assignment number must be an integer!")
+		return
 	#logger = Logger()
 	driver = webdriver.Firefox(firefox_profile=create_profile(), options=get_options() if headless else None)
 
 	scraper = kita.Scraper(driver, data['root_path'])
 	classes_to_iterate = all_classes if all else class_names
-
-	try:
-		for name in classes_to_iterate:
-			if not scraper.on_any_page():
-				if 'link' in all_classes[name]:
-					scraper.download_from(all_classes[name], assignment_num)
-					continue
-				else: scraper.to_home()
+	
+	for name in classes_to_iterate:
+		try:
+			if 'link' in all_classes[name]:
+				scraper.download_from(all_classes[name], assignment_num)
+				continue
+			elif not scraper.on_any_page(): scraper.to_home()
 			scraper.download(all_classes[name], assignment_num)
-
-	except:
-		print("Assignment could not be found!")
-	finally:
-		driver.quit()
+		except:
+			print("Assignment could not be found!")
+	print("EXITING")
+	driver.quit()
 
 if __name__ == '__main__':
 	main()

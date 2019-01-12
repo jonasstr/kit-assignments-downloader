@@ -50,7 +50,7 @@ class Scraper:
 			# Click on link without scrolling
 			else: self.driver.execute_script("arguments[0].click();", link)
 		except:
-			raise#raise Exception("Assignment could not be found!")
+			raise
 
 	def switch_to_last_tab(self):
 		# Wait until site has loaded
@@ -86,18 +86,14 @@ class Scraper:
 			# Open the class page in a new tab (and switch to it as specified in firefox preferences)
 			self.click_link(class_['name'], True)
 			self.switch_to_last_tab()
-			#print("LOG: Click on the assignments folder")
 			# Click on the assignments folder
 			self.click_link(class_['assignment']['name'])
 			if path:
-				#print("LOG: Click on the additional folder (if specified): " + path)
 				# Click on the additional folder (if specified)
 				self.click_link(path)
-			#print("LOG: Download the assigment")
 			# Download the assigment
 			self.click_link(assignment)
 			time.sleep(1)
-			#print("LOG: Close this tab")
 			# Close this tab
 			self.driver.close()
 			self.driver.switch_to.window(self.driver.window_handles[0])
