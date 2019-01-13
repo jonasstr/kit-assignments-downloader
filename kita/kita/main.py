@@ -17,9 +17,9 @@ def get_options():
 	return options
 
 def create_profile():
-	'''
+	"""
 	Sets the Firefox preferences
-	'''
+	"""
 	profile = webdriver.FirefoxProfile()
 	# Download to specified path
 	profile.set_preference("browser.download.folderList", 2)
