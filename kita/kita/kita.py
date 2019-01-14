@@ -9,7 +9,7 @@ import shutil, os
 import yaml
 
 class Scraper:
-	"""The core class of kita.
+	"""The core class of kita, implements all CLI commands.
 
 	Creates a new Scraper and a WebDriverWait object with a default 
 	maximum waiting time of 10 seconds.

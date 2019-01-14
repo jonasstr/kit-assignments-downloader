@@ -3,6 +3,7 @@ from logger import Logger
 from logging.handlers import RotatingFileHandler
 from selenium.webdriver.firefox.options import Options
 import traceback, logging, sys
+import re
 import yaml, click
 import kita
 
@@ -39,8 +40,16 @@ def create_profile():
 	profile.set_preference("browser.tabs.loadInBackground", False)
 	return profile
 
-CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
-@click.group(context_settings=CONTEXT_SETTINGS)
+def is_positive_int(value):
+	return re.search('^\d+$', value)
+
+def is_range(value):
+	return re.search('^\d+-\d+$', value)
+
+def is_sequence(value):
+	return re.search('^\d+(?:,\d+)*$', value)
+
+@click.group(context_settings=dict(help_option_names=['-h', '--help']))
 def main():
 	print("MAIN")
 
@@ -52,12 +61,20 @@ def main():
 @click.option('--headless/--visible', '-hl/-v', default=True,  help="Start the browser in headless mode (no visible UI).")
 def get(class_names, assignment_num, move, all, headless):
 	print("GET CALLED")
-	try:
-		int(assignment_num)
-	except (ValueError, TypeError):
-		print("Assignment number must be an integer!")
+
+	if is_positive_int(assignment_num):
+		assignments = [assignment_num]
+	# Alternative range for assignment_num instead of int. Example: 5-10
+	elif is_range(assignment_num):
+		assignment_nums = assignment_num.split('-')
+		assignments = range(int(assignment_nums[0]), int(assignment_nums[1]) + 1)
+	# Alternative int sequence for assignment_num instead of int. Example: 5,10,11
+	elif is_sequence(assignment_num):
+		assignments = assignment_num.split(',')
+	else: 
+		print("Assignment number must be an integer or in the correct format!")
 		return
-	#logger = Logger()
+	
 	driver = webdriver.Firefox(firefox_profile=create_profile(), options=get_options() if headless else None)
 
 	scraper = kita.Scraper(driver, user_data)
@@ -66,7 +83,8 @@ def get(class_names, assignment_num, move, all, headless):
 	for name in classes_to_iterate:
 		try:
 			class_ = all_classes[name]
-			scraper.get(class_, assignment_num, move)
+			for num in assignments:
+				scraper.get(class_, num, move)
 		except (IOError, OSError):
 			print("Invalid destination path for this assignment!")
 		except:
