@@ -24,12 +24,13 @@ class Scraper:
 
 	"""
 
-	def __init__(self, driver, download_path, dst):
+	def __init__(self, driver, user_data):
 		self.driver = driver
 		self.wait = WebDriverWait(self.driver, 10)
 		self.main_page = "https://ilias.studium.kit.edu"
-		self.download_path = download_path
-		self.dst = dst
+		self.user_data = user_data
+		self.download_path = user_data['download_path']
+		self.dst = user_data['destination']
 
 	def on_any_page(self):
 		"""
@@ -44,7 +45,7 @@ class Scraper:
 
 	def to_home(self):
 		"""Opens the ilias home page and logs the user in with the login
-			credentials sepcified in the user.yml file.
+			credentials specified in the user.yml file.
 
 		"""
 		with logger.bar("Opening main page.."):
@@ -55,11 +56,9 @@ class Scraper:
 			self.driver.find_element_by_link_text('Anmelden').click()
 			self.driver.find_element_by_id('f807').click()
 		
-			with open("config.yml") as config:
-				data = yaml.safe_load(config)
-				# Fill in login credentials and login.
-				self.driver.find_element_by_id('name').send_keys(data['user_name'])
-				self.driver.find_element_by_id('password').send_keys(data['password'], Keys.ENTER)
+			# Fill in login credentials and login.
+			self.driver.find_element_by_id('name').send_keys(self.user_data['user_name'])
+			self.driver.find_element_by_id('password').send_keys(self.user_data['password'], Keys.ENTER)
 
 	def path_of(self, name):
 		"""Retrieves the xpath of the link with the specified name on the current webpage.
@@ -145,7 +144,7 @@ class Scraper:
 		assignment = self.format_assignment_name(assignment, assignment_num)
 
 		path = ''
-		if len(values == 2):
+		if len(values) == 2:
 			path = self.format_assignment_name(values[0], assignment_num)
 
 		with logger.bar("Downloading '{}' from '{}'".format(assignment, class_['name']), True):
@@ -174,7 +173,7 @@ class Scraper:
 
 		Args:
 			class_: The class retrieved from the config.yml file. Must include
-				a link attribute to sepcifiy the main url of the external site.
+				a link attribute to specify the main url of the external site.
 			assignment_num (int): The number of the assignment to download.
 
 		Returns:
@@ -226,3 +225,54 @@ class Scraper:
 
 		with logger.bar("Moving assignment to {}".format("root\\" + class_['path']), True):
 			shutil.move(src, dst_file)
+
+	def get(self, class_, assignment_num, move):
+		assignment = None
+		if 'link' in class_:
+			assignment = self.download_from(class_, assignment_num)
+		else:
+			if not self.on_any_page(): self.to_home()
+			assignment = self.download(class_, assignment_num)
+		if move:
+			self.move_and_rename(assignment, class_, assignment_num)
+
+	def latest_assignment(self, class_dir):
+		"""Finds the currently latest assignment in a given user directory.
+		
+		Args:
+			class_dir (dict): The absolute path to the class directory to search in.
+
+		Returns:
+			int: The latest assignment number, 0 if no file matched the rename_format.
+		"""
+
+		rename_format = self.dst['rename_format'] + ".pdf"
+		current_assignment = 1
+		latest_assignment = None
+		while latest_assignment == None:
+			assignment_path = os.path.join(class_dir, self.format_assignment_name(rename_format, current_assignment))
+			# Search for the current assignment PDF.
+			if not os.path.isfile(assignment_path):
+				latest_assignment = current_assignment - 1
+			else: current_assignment += 1
+		return latest_assignment
+
+	def update_directory(self, class_):
+
+		class_dir = os.path.join(self.dst['root_path'], class_['path'])
+		latest = self.latest_assignment(class_dir)
+
+		if (latest > 0):
+			assignment = self.format_assignment_name(self.dst['rename_format'], latest)
+			print("Detected latest assignment: {}".format(assignment))
+		else: print("No assignments found in given directory")
+
+		try:
+			while (True):
+				self.get(class_, latest + 1, True)
+				latest += 1
+		except (IOError, OSError):
+			print("Invalid destination path for this assignment!")
+		except:
+			raise
+			print("Assignment could not be found!")
