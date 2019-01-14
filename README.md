@@ -6,10 +6,9 @@ An unofficial KIT assignments downloader for [ilias.studium.kit.edu](http://ilia
 
 If you feel like logging in to Ilias each week and downloading the latest assignments manually takes too much time, then this project might be for you. Just type in ``kita update`` followed by the name of the class and kita will automatically log in to your Ilias account, download the latest assignments of all your classes and copy them to your preferred KIT folder.
 
+## Installation and setup
 
-## Installation and usage
-
-If you are on Windows, you need to make sure [Python 3](https://www.python.org/downloads/) is installed on your computer.  
+If you are on Windows, make sure [Python 3](https://www.python.org/downloads/) is installed on your computer.  
 Then open a console and type:
 
     pip install kita
@@ -19,3 +18,19 @@ Before you can download anything, kita needs to know your ilias and user name an
     kita setup
       
 Note: Your user name and password will only be stored locally at... **Never share the user.yml file with anyone!** Feel free to check out the source code for more info.
+
+## Usage
+
+After the setup is complete, you can start downloading assignments. You can type `-h` or `--help` after a specific command for more information about that command.
+
+    kita get [OPTIONS] [CLASS_NAMES]... ASSIGNMENT_NUM
+    
+**Example**: `kita get la 9`  
+This will download the 9th assignment from your class Lineare Algebra 1. You can download assignments from multiple classes at once by separating the classes by a space, e.g: `kita get la gbi 9`. If you want to add your own classes, see [...]
+ 
+**Options**:  
+`--move`/`-mv`: Will move and rename your downloaded files if you have specified a location in the user.yml file.  
+`--all`/`-a`: Download assignments for all your classes.  
+  ```update```
+  ```move```
+
