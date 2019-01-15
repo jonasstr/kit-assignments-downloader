@@ -1,11 +1,20 @@
+import logging
+import os
+import re
+import sys
+import tkinter as tk
+from tkinter import filedialog
+import traceback
+
 from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 from logger import Logger
 from logging.handlers import RotatingFileHandler
-from selenium.webdriver.firefox.options import Options
-import traceback, logging, sys
-import re
-import yaml, click
+
+import click
 import kita
+import yaml
+
 
 with open("user.yml", encoding='utf-8') as user:
 	user_data = yaml.safe_load(user)
@@ -54,11 +63,42 @@ def main():
 	print("MAIN")
 
 @main.command()
-@click.argument('class_names', nargs=-1, required=False, type=click.Choice(all_classes))
-@click.argument('assignment_num', required=True)
+def setup():	
+	user_path = os.path.join(click.get_app_dir("kita"), "user.yml")
+	print(user_path)
+	if os.path.isfile(user_path):
+		if not click.confirm("Seems like you already used the 'kita setup' command before. Start again?"):
+			return
+
+	data = {}
+	data['user_name'] = click.prompt("Please enter your correct ilias user name").strip()
+	data['password'] = click.prompt("Please enter your ilias password").strip()
+
+	if click.confirm("Auto-sort and rename your assignments after downloading?"):
+		click.echo("Please choose a location for saving your assignments")
+
+		root = tk.Tk()
+		root.withdraw()
+		selected_path = filedialog.askdirectory()
+		print(selected_path)
+
+		os.makedirs(os.path.dirname(root_path), exist_ok=True)
+		with open(root_path, 'w') as user_file:
+			yaml.dump(data, user_file, default_flow_style=False)
+
+	else:
+		click.echo("Please choose a download location for saving your assignments")
+		selected_path = filedialog.askdirectory()
+		print(selected_path)
+		click.echo("\nSetup successful. Type 'kita get' to start.")
+
+
+@main.command()
+@click.argument('class_names', nargs=-1, required=True, type=click.Choice(all_classes))
+@click.argument('assignment_num')
 @click.option('--move', '-mv', is_flag=True, help="Move the downloaded assignments to the specified directory and rename them.")
 @click.option('--all', '-a', is_flag=True, help="Download assignments from all specified classes.")
-@click.option('--headless/--visible', '-hl/-v', default=True,  help="Start the browser in headless mode (no visible UI).")
+@click.option('--headless/--visible', '-hl/-v', default=True, help="Start the browser in headless mode (no visible UI).")
 def get(class_names, assignment_num, move, all, headless):
 	print("GET CALLED")
 

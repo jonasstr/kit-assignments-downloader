@@ -1,12 +1,18 @@
-from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+import logger
+import os
+import shutil
+import time
+import traceback
+
 from selenium.webdriver import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
-import time, logger, traceback
-import shutil, os
+
 import yaml
+
 
 class Scraper:
 	"""The core class of kita, implements all CLI commands.
