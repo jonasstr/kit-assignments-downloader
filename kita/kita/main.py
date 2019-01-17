@@ -6,22 +6,24 @@ import tkinter as tk
 from tkinter import filedialog
 import traceback
 
+import click
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 from logger import Logger
 from logging.handlers import RotatingFileHandler
+import ruamel.yaml as yaml
 
-import click
 import kita
-import yaml
+import utils
 
 
+yaml = yaml.YAML(typ='safe')
 with open("user.yml", encoding='utf-8') as user:
-	user_data = yaml.safe_load(user)
+	user_data = yaml.load(user)
 	download_path = user_data['download_path']
 
 with open("config.yml", encoding='utf-8') as config:
-	config_data = yaml.safe_load(config)
+	config_data = yaml.load(config)
 	all_classes = config_data['classes']
 
 def get_options():
@@ -58,39 +60,116 @@ def is_range(value):
 def is_sequence(value):
 	return re.search('^\d+(?:,\d+)*$', value)
 
+def is_similar(folder_name, class_):
+	class_name = class_['name']
+	if (folder_name.startswith(class_name) or class_name.startswith(folder_name)):
+		return True
+	class_suffixes = {'I': 1, 'II': 2, 'III': 3}
+	for suffix in class_suffixes:
+		if folder_name.endswith(suffix):
+			return folder_name.replace(suffix, str(class_suffixes[suffix])) == class_name
+
+
+def find_assignments_folder(path, folder_name):
+	for name in all_classes:
+		# Folder has been found.
+		if folder_name.lower() == name or is_similar(folder_name, all_classes[name]):
+			sub_folders = next(os.walk(path))[1]
+			# Search for possible assignment sub-folders.
+			for sub_folder in sub_folders:
+				name_list = ['übungsblätter', 'blätter', 'assignments']
+				if any(x in sub_folder.lower() for x in name_list):
+					return (name, os.path.join(folder_name, sub_folder))
+			return (name, folder_name)
+	return None
+	
+
 @click.group(context_settings=dict(help_option_names=['-h', '--help']))
 def main():
+	'''Test
+	'''
 	print("MAIN")
 
+def select_folder_manually(choice):
+
+	class_ = click.prompt("Which classes are missing? Choose from {}".format(choice))
+	while not class_ in all_classes.keys():
+		click.echo("Error: invalid input")
+		class_ = click.prompt("Which classes are missing? Choose from {}".format(choice))
+	click.echo("Choose a location for saving your {} classes".format(class_.upper()))
+	return (class_, filedialog.askdirectory())
+
+
 @main.command()
-def setup():	
-	user_path = os.path.join(click.get_app_dir("kita"), "user.yml")
-	print(user_path)
-	if os.path.isfile(user_path):
-		if not click.confirm("Seems like you already used the 'kita setup' command before. Start again?"):
-			return
+@click.option('--config', '-cf', is_flag=True, help="Open the user config file created during setup.")
+def setup(config):
+	# TODO: Move to different class!
+	#user_yml_path = os.path.join(click.get_app_dir("kita"), "user.yml")
+	#print(user_yml_path)
+	#if os.path.isfile(user_yml_path):
+	#	if config:
+	#		click.echo("Opening user config file..")
+	#		click.launch(user_yml_path)
+	#		return
+	#	elif not click.confirm("Kita is already set up. Continue anyway?"):
+	#		click.echo("\nSetup cancelled.")
+	#		return
+#
+	#data = {}
+	#data['user_name'] = click.prompt("Please enter your correct ilias user name").strip()
+	#data['password'] = click.prompt("Please enter your ilias password").strip()
+#
+	#click.echo("Choose a location for saving your assignments")
+	#root = tk.Tk()
+	#root.withdraw()
+	#selected_path = filedialog.askdirectory()
+	#data['destination'] = {}
+	#data['destination']['root_path'] = selected_path
+#
+	#click.echo("Downloads will be saved to '{}'.".format(selected_path))
+	#os.makedirs(os.path.dirname(user_yml_path), exist_ok=True)
+	#with open(user_yml_path, 'w') as path:
+	#	yaml.dump(data, path, default_flow_style=False)
+#
+	#click.echo("\nSetup successful. Type 'kita --help' for details.")
 
-	data = {}
-	data['user_name'] = click.prompt("Please enter your correct ilias user name").strip()
-	data['password'] = click.prompt("Please enter your ilias password").strip()
+	root_path = 'G:/KIT/Sonstiges/WS18-19'	
+	sub_folders = next(os.walk(root_path))[1]
 
-	if click.confirm("Auto-sort and rename your assignments after downloading?"):
-		click.echo("Please choose a location for saving your assignments")
+	assignment_folders = []
+	for folder in sub_folders:
+		path = os.path.join(root_path, folder)
+		result = find_assignments_folder(path, folder)
+		if result:
+			assignment_folders.append(result)
 
-		root = tk.Tk()
-		root.withdraw()
-		selected_path = filedialog.askdirectory()
-		print(selected_path)
+	if assignment_folders:
+		click.echo("\nPossible KIT folder detected.")
+		for folder in assignment_folders:
+			path_msg = os.path.join("root", folder[1])
+			message = utils.reformat("Save {} assignments to '{}' folder?".format(folder[0].upper(), path_msg))
+			if click.confirm(message):
+				print('OK')
+				# Set class path
+			#else:
 
-		os.makedirs(os.path.dirname(root_path), exist_ok=True)
-		with open(root_path, 'w') as user_file:
-			yaml.dump(data, user_file, default_flow_style=False)
+		while not click.confirm("Are these all classes for now?"):			
+			choice = ', '.join(key for key in all_classes.keys())
+			selection = select_folder_manually(choice)
+			class_key = selection[0]
+			path = selection[1]
 
-	else:
-		click.echo("Please choose a download location for saving your assignments")
-		selected_path = filedialog.askdirectory()
-		print(selected_path)
-		click.echo("\nSetup successful. Type 'kita get' to start.")
+			if path:
+				# add folder
+				config = yaml.load(open('config.yml'))
+				class_ = config['classes'][class_key]
+				class_['path'] = path
+
+				yaml.compact(seq_seq=False, seq_map=False)
+
+				print("Add {} path {}.".format(class_key, path))
+				with open('config.yml', 'w') as cfg_path:
+					yaml.dump(config, cfg_path)
 
 
 @main.command()

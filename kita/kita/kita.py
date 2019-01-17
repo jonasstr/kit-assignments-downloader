@@ -11,8 +11,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 
+import click
 import yaml
-
 
 class Scraper:
 	"""The core class of kita, implements all CLI commands.

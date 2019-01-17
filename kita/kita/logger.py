@@ -1,17 +1,12 @@
 from logging.handlers import RotatingFileHandler
 from selenium.common.exceptions import TimeoutException
 import logging
+import utils
 
 class ProgressBar:
 
-	def reformat(self, value):
-		chars = {'Ä':'Ae','Ö':'Oe','Ü':'Ue','ä':'ae','ö':'oe','ü':'ue'}
-		for char in chars:
-			value = value.replace(char, chars[char])
-		return value
-
 	def __init__(self, message, suffix=False):
-		self.output = "\r" + self.reformat(message)
+		self.output = "\r" + utils.reformat(message)
 		self.done = ", done." if suffix else ""
 		print(self.output, end="", flush=True)
 
