@@ -17,9 +17,12 @@ from misc.logger import Logger
 import misc.utils as utils
 
 
-yaml = YAML(typ='safe')
+yaml = YAML(typ='rt')
 yaml.indent(mapping=2, sequence=4, offset=2)
 yaml.compact(seq_seq=False, seq_map=False)
+
+user_yml_path = os.path.join(click.get_app_dir("kita"), "user.yml")
+cfg_yml_path = os.path.join(click.get_app_dir("kita"), "config.yml")
 
 with open("user.yml", encoding='utf-8') as user:
 	user_data = yaml.load(user)
@@ -69,6 +72,15 @@ def main():
 	'''
 	print("MAIN")
 
+@main.command()
+@click.argument('type', required=True, type=click.Choice(['config', 'user']))
+def view(type):
+	if type == 'config':
+		print("open cfg")
+	elif type == 'user':
+		print("open user")
+
+
 def is_similar(folder_name, class_):
 	class_name = class_['name']
 	if (folder_name.startswith(class_name) or class_name.startswith(folder_name)):
@@ -94,7 +106,7 @@ def find_assignments_folder(path, folder_name):
 def select_folder_manually(choice):
 
 	class_ = click.prompt("Which classes are missing? Choose from {}".format(choice))
-	while not class_ in all_classes.keys():
+	while not class_.lower() in all_classes.keys():
 		click.echo("Error: invalid input")
 		class_ = click.prompt("Which classes are missing? Choose from {}".format(choice))
 	click.echo("Choose a location for saving your {} classes".format(class_.upper()))
@@ -102,76 +114,89 @@ def select_folder_manually(choice):
 
 
 @main.command()
-@click.option('--config', '-cf', is_flag=True, help="Open the user config file created during setup.")
-def init(config):
-	# TODO: Move to different class!
-	#user_yml_path = os.path.join(click.get_app_dir("kita"), "user.yml")
-	#print(user_yml_path)
-	#if os.path.isfile(user_yml_path):
-	#	if config:
-	#		click.echo("Opening user config file..")
-	#		click.launch(user_yml_path)
-	#		return
-	#	elif not click.confirm("Kita is already set up. Continue anyway?"):
-	#		click.echo("\nSetup cancelled.")
-	#		return
-#
-	#data = {}
-	#data['user_name'] = click.prompt("Please enter your correct ilias user name").strip()
-	#data['password'] = click.prompt("Please enter your ilias password").strip()
-#
-	#click.echo("Choose a location for saving your assignments")
-	
-	#selected_path = filedialog.askdirectory()
-	#data['destination'] = {}
-	#data['destination']['root_path'] = selected_path
-#
-	#click.echo("Downloads will be saved to '{}'.".format(selected_path))
-	#os.makedirs(os.path.dirname(user_yml_path), exist_ok=True)
-	#with open(user_yml_path, 'w') as path:
-	#	yaml.dump(data, path, default_flow_style=False)
-#
-	#click.echo("\nSetup successful. Type 'kita --help' for details.")
+@click.option('--config', '-cf', is_flag=True, help="Setup the classes (config.yml) file")
+@click.option('--user', '-u', is_flag=True, help="Setup the user.yml file")
+def setup(config, user):
+	print(user_yml_path)
+	# Setup config.yml if either the --config option has been provided or no options at all.
+	setup_config = config or config == user
+	# Setup user.yml if either the --user option has been provided or no options at all.
+	setup_user = user or user == config
+	if setup_user:
+		# user.yml already exists.
+		if os.path.isfile(user_yml_path):
+			if not click.confirm("Kita is already set up. Overwrite existing config?"):
+				click.echo("\nSetup cancelled.")
+				return
 
-	root = tk.Tk()
-	root.withdraw()
+		data = {}
+		data['user_name'] = click.prompt("Please enter your correct ilias user name").strip()
+		data['password'] = click.prompt("Please enter your ilias password").strip()
+		click.echo("Choose a location for saving your assignments")
 
-	root_path = 'C:/Users/jonas/Documents/KIT/Sonstiges/WS18-19'	
-	sub_folders = next(os.walk(root_path))[1]
+		root = tk.Tk()
+		root.withdraw()
+		selected_path = filedialog.askdirectory()
 
-	assignment_folders = []
-	for folder in sub_folders:
-		path = os.path.join(root_path, folder)
-		result = find_assignments_folder(path, folder)
-		if result:
-			assignment_folders.append(result)
+		data['destination'] = {}
+		data['destination']['root_path'] = selected_path
+		click.echo("Downloads will be saved to '{}'.".format(selected_path))
 
-	if assignment_folders:
-		click.echo("\nPossible KIT folder detected.")
-		for folder in assignment_folders:
-			path_msg = os.path.join("root", folder[1])
-			message = utils.reformat("Save {} assignments to '{}' folder?".format(folder[0].upper(), path_msg))
-			if click.confirm(message):
-				print('OK')
-				# Set class path
-			#else:
+		os.makedirs(os.path.dirname(user_yml_path), exist_ok=True)
+		with open(user_yml_path, 'w') as user_path:
+			yaml.dump(data, user_path)
 
-		while not click.confirm("Are these all classes for now?"):			
-			choice = ', '.join(key for key in all_classes.keys())
-			selection = select_folder_manually(choice)
-			class_key = selection[0]
-			path = selection[1]
+	if setup_config:
+		# Make sure user.yml has been set up.
+		if os.path.isfile(user_yml_path):
+			with open(user_yml_path, 'w') as cfg:
+				if os.path.getsize(user_yml_path) > 0:
+					user_data = yaml.load(cfg)
+				# TODO: fix
+				if user_data is not None and 'destination' in user_data and 'root_path' in user_data['destination']:
+					root_path = user_data['destination']['root_path']
+				else: 
+					click.echo("Kita has not been configured correctly. Use 'kita setup --user' instead."
+						"\nSetup cancelled.")
+					return
 
-			if path:
-				# add folder
-				config = yaml.load(open('config.yml'))
-				class_ = config['classes'][class_key]
-				class_['path'] = path
+			sub_folders = next(os.walk(root_path))[1]			
+			assignment_folders = []
+			for folder in sub_folders:
+				path = os.path.join(root_path, folder)
+				result = find_assignments_folder(path, folder)
+				if result:
+					assignment_folders.append(result)
+		
+			if assignment_folders:
+				click.echo("\nPossible KIT folder detected:")
+				added_classes = []
+				for folder in assignment_folders:
+					message = utils.reformat("Save {} assignments to '{}' folder?".format(folder[0].upper(), folder[1]))
+					if click.confirm(message, default=True):
+						added_classes.append(folder[0])
+					click.echo('OK')
+		
+				selected = ', '.join(class_.upper() for class_ in added_classes)
+				choice = ', '.join(key.upper() for key in all_classes.keys() if key not in added_classes)
+				while choice and not click.confirm("Are these all classes: {}?".format(selected)):
+					selection = select_folder_manually(choice)
+					class_key = selection[0].lower()
+					path = selection[1]
+					added_classes.append(class_key)
+					choice = ', '.join(key for key in all_classes.keys() if key not in added_classes)
+		
+					if path:
+						config = yaml.load(open('config.yml'))
+						class_ = config['classes'][class_key]
+						class_['path'] = path
+		
+						print("Add {} path {}.".format(class_key, path))
+						with open('config.yml', 'w', encoding='utf-8') as cfg_path:
+							yaml.dump(config, cfg_path)
 
+	click.echo("\nSetup successful. Type 'kita --help' for details.")
 
-				print("Add {} path {}.".format(class_key, path))
-				with open('config.yml', 'w') as cfg_path:
-					yaml.dump(config, cfg_path)
 
 
 @main.command()
