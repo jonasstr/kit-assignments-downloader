@@ -1,7 +1,8 @@
 from logging.handlers import RotatingFileHandler
 from selenium.common.exceptions import TimeoutException
 import logging
-import utils
+
+import misc.utils
 
 class ProgressBar:
 

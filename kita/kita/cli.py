@@ -9,15 +9,18 @@ import traceback
 import click
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
-from logger import Logger
 from logging.handlers import RotatingFileHandler
-import ruamel.yaml as yaml
+from ruamel.yaml import YAML
 
-import kita
-import utils
+import core
+from misc.logger import Logger
+import misc.utils as utils
 
 
-yaml = yaml.YAML(typ='safe')
+yaml = YAML(typ='safe')
+yaml.indent(mapping=2, sequence=4, offset=2)
+yaml.compact(seq_seq=False, seq_map=False)
+
 with open("user.yml", encoding='utf-8') as user:
 	user_data = yaml.load(user)
 	download_path = user_data['download_path']
@@ -60,6 +63,12 @@ def is_range(value):
 def is_sequence(value):
 	return re.search('^\d+(?:,\d+)*$', value)
 
+@click.group(context_settings=dict(help_option_names=['-h', '--help']))
+def main():
+	'''Test
+	'''
+	print("MAIN")
+
 def is_similar(folder_name, class_):
 	class_name = class_['name']
 	if (folder_name.startswith(class_name) or class_name.startswith(folder_name)):
@@ -68,7 +77,6 @@ def is_similar(folder_name, class_):
 	for suffix in class_suffixes:
 		if folder_name.endswith(suffix):
 			return folder_name.replace(suffix, str(class_suffixes[suffix])) == class_name
-
 
 def find_assignments_folder(path, folder_name):
 	for name in all_classes:
@@ -82,13 +90,6 @@ def find_assignments_folder(path, folder_name):
 					return (name, os.path.join(folder_name, sub_folder))
 			return (name, folder_name)
 	return None
-	
-
-@click.group(context_settings=dict(help_option_names=['-h', '--help']))
-def main():
-	'''Test
-	'''
-	print("MAIN")
 
 def select_folder_manually(choice):
 
@@ -102,7 +103,7 @@ def select_folder_manually(choice):
 
 @main.command()
 @click.option('--config', '-cf', is_flag=True, help="Open the user config file created during setup.")
-def setup(config):
+def init(config):
 	# TODO: Move to different class!
 	#user_yml_path = os.path.join(click.get_app_dir("kita"), "user.yml")
 	#print(user_yml_path)
@@ -120,8 +121,7 @@ def setup(config):
 	#data['password'] = click.prompt("Please enter your ilias password").strip()
 #
 	#click.echo("Choose a location for saving your assignments")
-	#root = tk.Tk()
-	#root.withdraw()
+	
 	#selected_path = filedialog.askdirectory()
 	#data['destination'] = {}
 	#data['destination']['root_path'] = selected_path
@@ -133,7 +133,10 @@ def setup(config):
 #
 	#click.echo("\nSetup successful. Type 'kita --help' for details.")
 
-	root_path = 'G:/KIT/Sonstiges/WS18-19'	
+	root = tk.Tk()
+	root.withdraw()
+
+	root_path = 'C:/Users/jonas/Documents/KIT/Sonstiges/WS18-19'	
 	sub_folders = next(os.walk(root_path))[1]
 
 	assignment_folders = []
@@ -165,7 +168,6 @@ def setup(config):
 				class_ = config['classes'][class_key]
 				class_['path'] = path
 
-				yaml.compact(seq_seq=False, seq_map=False)
 
 				print("Add {} path {}.".format(class_key, path))
 				with open('config.yml', 'w') as cfg_path:
