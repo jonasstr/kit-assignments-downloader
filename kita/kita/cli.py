@@ -42,10 +42,8 @@ def create_profile():
 	Sets the Firefox preferences
 	"""
 	profile = webdriver.FirefoxProfile()
-	# Download to specified path
-	profile.set_preference("browser.download.folderList", 2)
+	# Close download window immediately
 	profile.set_preference("browser.download.manager.showWhenStarting", False)
-	profile.set_preference("browser.download.dir", download_path)
 	profile.set_preference("browser.download.manager.closeWhenDone", True)
 	# Download PDF files without asking the user
 	profile.set_preference("pdfjs.disabled", True)
@@ -109,10 +107,28 @@ def select_folder_manually(choice):
 	while not class_.lower() in all_classes.keys():
 		click.echo("Error: invalid input")
 		class_ = click.prompt("Which classes are missing? Choose from {}".format(choice))
-	click.echo("Choose a location for saving your {} classes".format(class_.upper()))
+	click.echo("Choose a location for saving your {} classes.".format(class_.upper()))
 	return (class_, filedialog.askdirectory())
 
-def show_kit_folder_detected_dialog(assignment_folders):	
+def show_create_class_folders_dialog(assignment_folders, root_path):
+
+	if click.confirm("Create class folders in '{}'?".format(root_path)):
+		download_dir = os.path.join(root_path, "Downloads")
+		os.makedirs(download_dir, exist_ok=True)
+		with open('config.yml', 'rb') as cfg_path:
+			config = yaml.load(cfg_path)
+		for folder in assignment_folders:
+			class_key = folder[0]
+			if class_key in all_classes:
+				class_name = config['classes'][class_key]['name'].replace('/','-').replace('\\','-')
+				class_dir = os.path.join(download_dir, class_name)
+				os.makedirs(class_dir, exist_ok=True)
+				config['classes'][class_key]['path'] = class_dir
+		with open('config.yml', 'w', encoding='utf-8') as cfg_path:
+			yaml.dump(config, cfg_path)
+		click.echo("Downloads will be saved to '{}'.".format(utils.reformat(download_dir)))
+
+def show_kit_folder_detected_dialog(assignment_folders, root_path):	
 
 	click.echo("\nPossible KIT folder detected:")
 	added_classes = []
@@ -120,20 +136,26 @@ def show_kit_folder_detected_dialog(assignment_folders):
 		message = utils.reformat("Save {} assignments to '{}' folder?".format(folder[0].upper(), folder[1]))
 		if click.confirm(message, default=True):
 			added_classes.append(folder[0])
-		click.echo('OK')
+
+	if not added_classes:
+		show_create_class_folders_dialog(assignment_folders, root_path)
+		return
 
 	selected = ', '.join(class_.upper() for class_ in added_classes)
 	choice = ', '.join(key.upper() for key in all_classes.keys() if key not in added_classes)
 	while choice and not click.confirm("Are these all classes: {}?".format(selected)):
 		selection = select_folder_manually(choice)
 		class_key = selection[0].lower()
-		path = selection[1]
+		selected_path = selection[1]
+
 		added_classes.append(class_key)
+		selected = ', '.join(class_.upper() for class_ in added_classes)
 		choice = ', '.join(key for key in all_classes.keys() if key not in added_classes)
-		if path:
-			config = yaml.load(open('config.yml'))
-			config['classes'][class_key]['path'] = path
-			print("Add {} path {}.".format(class_key, path))
+		if selected_path:
+			# Open config.yml in read binary mode.
+			config = yaml.load(open('config.yml', 'rb'))
+			config['classes'][class_key]['path'] = selected_path
+			click.echo("{} assignments will be saved to '{}'.".format(class_key.upper(), utils.reformat(selected_path)))
 			with open('config.yml', 'w', encoding='utf-8') as cfg_path:
 				yaml.dump(config, cfg_path)
 
@@ -148,11 +170,11 @@ def setup_config():
 			if file_size > 0 and 'destination' in user_data and 'root_path' in user_data['destination']:
 				root_path = user_data['destination']['root_path']
 			else: 
-				click.echo("\nKita has not been configured correctly (empty config file). Use 'kita setup --user' instead.")
+				click.echo("\nKita has not been configured correctly (empty config file).\nUse 'kita setup --user' instead.")
 				return False
 
 		if not os.path.isdir(root_path):
-			click.echo("\nKita has not been configured correctly (root_path not found). Use 'kita setup --user' instead.")
+			click.echo("\nKita has not been configured correctly (root_path not found).\nUse 'kita setup --user' instead.")
 			return False
 
 		sub_folders = next(os.walk(root_path))[1]			
@@ -164,7 +186,7 @@ def setup_config():
 				assignment_folders.append(result)
 	
 		if assignment_folders:
-			show_kit_folder_detected_dialog(assignment_folders)
+			show_kit_folder_detected_dialog(assignment_folders, root_path)
 	else: return False
 	return True
 
@@ -176,10 +198,9 @@ def setup_user():
 	data = {}
 	data['user_name'] = click.prompt("Please enter your correct ilias user name").strip()
 	data['password'] = click.prompt("Please enter your ilias password").strip()
-	click.echo("Choose a location for saving your assignments")
-
-	root = tk.Tk()
-	root.withdraw()
+	click.echo("\nChoose a location for saving your assignments.\nIf you already downloaded assignments manually "
+		"please choose your KIT folder for auto-detection.")
+	
 	selected_path = filedialog.askdirectory()
 	data['destination'] = {}
 	data['destination']['root_path'] = selected_path
@@ -195,6 +216,8 @@ def setup_user():
 @click.option('--user', '-u', is_flag=True, help="Setup the user.yml file")
 def setup(config, user):
 
+	root = tk.Tk()
+	root.withdraw()
 	# Setup user.yml if either the --user option has been provided or no options at all.
 	if user or user == config:
 		if not setup_user():
