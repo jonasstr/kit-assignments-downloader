@@ -102,39 +102,59 @@ def is_similar(folder_name, class_name):
 		the only differnce between the strings are the file endings (roman instead of latin digits).
 
 	'''
-
 	class_name = class_['name']
 	if (folder_name.startswith(class_name) or class_name.startswith(folder_name)):
 		return True
 	class_suffixes = {'I': 1, 'II': 2, 'III': 3}
 	for suffix in class_suffixes:
 		if folder_name.endswith(suffix):
+			# Check if the folder name is equivalent to the class name apart from the roman suffix.
 			return folder_name.replace(suffix, str(class_suffixes[suffix])) == class_name
 
-def find_assignments_folder(path, folder_name):
+def find_assignments_folder(folder_path, folder_name):
+	'''Searches for a possible folder containing the assignments based on the folder name.
+
+	Args:
+		folder_path (str): The absolute path of the assignment folder to search in.
+		folder_name (str): The name of the folder.
+
+	Returns:
+		tuple: The class key and the absolute path of the found folder, None if no assignment folder was found. 
+
+	'''
 	for class_ in all_classes:
 		# Folder has been found.
 		if folder_name.lower() == class_ or is_similar(folder_name, all_classes[class_]['name']):
-			sub_folders = next(os.walk(path))[1]
+			sub_folders = next(os.walk(folder_path))[1]
 			# Search for possible assignment sub-folders.
 			for sub_folder in sub_folders:
 				name_list = ['übungsblätter', 'blätter', 'assignments']
+				# Check whether the name of the sub-folder is either one of the above names.
 				if any(x in sub_folder.lower() for x in name_list):
 					return (class_, os.path.join(folder_name, sub_folder))
 			return (class_, folder_name)
 	return None
 
-def select_folder_manually(choice):
+def show_select_folder_manually_dialog(choice):
+	'''Prints the setup dialog for adding the location of additional assignments.
 
-	class_ = click.prompt("Which classes are missing? Choose from {}".format(choice))
-	while not class_.lower() in all_classes.keys():
+	Args:
+		choice: The set of the possible classes to choose from.
+
+	Returns:
+		tuple: The name of the selected class and the path chosen from the folder selection dialog window.
+
+	'''
+	class_name = click.prompt("Which classes are missing? Choose from {}".format(choice))
+	while not class_name.lower() in all_classes.keys():
 		click.echo("Error: invalid input")
-		class_ = click.prompt("Which classes are missing? Choose from {}".format(choice))
-	click.echo("Choose a location for saving your {} classes.".format(class_.upper()))
-	return (class_, filedialog.askdirectory())
+		class_name = click.prompt("Which classes are missing? Choose from {}".format(choice))
+	click.echo("Choose a location for saving your {} classes.".format(class_name.upper()))
+	return (class_name, filedialog.askdirectory())
 
 def show_create_class_folders_dialog(assignment_folders, root_path):
-
+	'''
+	'''
 	if click.confirm("Create class folders in '{}'?".format(root_path)):
 		download_dir = os.path.join(root_path, "Downloads")
 		os.makedirs(download_dir, exist_ok=True)
@@ -167,7 +187,7 @@ def show_kit_folder_detected_dialog(assignment_folders, root_path):
 	selected = ', '.join(class_.upper() for class_ in added_classes)
 	choice = ', '.join(key.upper() for key in all_classes.keys() if key not in added_classes)
 	while choice and not click.confirm("Are these all classes: {}?".format(selected)):
-		selection = select_folder_manually(choice)
+		selection = show_select_folder_manually_dialog(choice)
 		class_key = selection[0].lower()
 		selected_path = selection[1]
 
@@ -203,8 +223,8 @@ def setup_config():
 		sub_folders = next(os.walk(root_path))[1]			
 		assignment_folders = []
 		for folder in sub_folders:
-			path = os.path.join(root_path, folder)
-			result = find_assignments_folder(path, folder)
+			folder_path = os.path.join(root_path, folder)
+			result = find_assignments_folder(folder_path, folder)
 			if result:
 				assignment_folders.append(result)
 	

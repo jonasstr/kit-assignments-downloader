@@ -29,7 +29,6 @@ class Scraper:
 			move_and_rename as well as the format specifying how all files should be renamed.
 
 	"""
-
 	def __init__(self, driver, user_data):
 		self.driver = driver
 		self.wait = WebDriverWait(self.driver, 10)
@@ -75,6 +74,7 @@ class Scraper:
 
 		Returns:
 			The xpath to the link specified by the name argument. 
+
 		"""
 		return "//a[text()='{}' and @class='il_ContainerItemTitle']".format(name)
 
@@ -88,6 +88,7 @@ class Scraper:
 		Raises:
 			TimeoutException: If the link with the given name could not be found 
 				after a certain	amount of time.
+
 		"""
 		try:
 			link = self.wait.until(EC.element_to_be_clickable((By.XPATH, self.path_of(name))))
@@ -184,8 +185,8 @@ class Scraper:
 
 		Returns:
 			str: The name of the link of the downloaded assignment.
+			
 		"""
-
 		with logger.bar("Opening page specified by link attribute.."):
 			self.driver.get(class_['link'])
 		
@@ -218,8 +219,8 @@ class Scraper:
 				file. Specifies the (optional) file format of the assignment PDF and 
 				the path to copy it to.
 			assignment_num (int): The assignment number of the downloaded assignment file.
-		"""
 
+		"""
 		file_name = assignment
 		asgmt = class_['assignment']
 		if 'file_format' in asgmt:
@@ -250,8 +251,8 @@ class Scraper:
 
 		Returns:
 			int: The latest assignment number, 0 if no file matched the rename_format.
-		"""
 
+		"""
 		rename_format = self.dst['rename_format'] + ".pdf"
 		current_assignment = 1
 		latest_assignment = None
