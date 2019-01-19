@@ -33,13 +33,21 @@ with open("config.yml", encoding='utf-8') as config:
 	all_classes = config_data['classes']
 
 def get_options():
+	'''
+	Returns: 
+		The options for running Firefox in headless mode.
+	'''
 	options = Options()
 	options.headless = True
 	return options
 
 def create_profile():
-	"""
-	Sets the Firefox preferences
+	"""Creates a Firefox profile required for navigating on a webpage.
+	Sets the preferences allowing PDFs to be downloaded immediately as well as
+	navigating between tabs using keyboard shortcuts.
+	
+	Returns:
+		The Firefox profile.
 	"""
 	profile = webdriver.FirefoxProfile()
 	# Close download window immediately
@@ -79,7 +87,22 @@ def view(type):
 		print("open user")
 
 
-def is_similar(folder_name, class_):
+def is_similar(folder_name, class_name):
+	'''Checks whether a given folder name is similar to the full name of a config.yml class
+		or is equal to the class key (e.g. la).
+
+	"Similar" in this case only refers to the ending of the folder name.
+
+	Args:
+		folder_name (str): The name of the folder to check.
+		class_name (str): The class key or full name to compare the folder name to.
+
+	Returns:
+		Whether the folder_name is included in the class_name or vice versa, or whether
+		the only differnce between the strings are the file endings (roman instead of latin digits).
+
+	'''
+
 	class_name = class_['name']
 	if (folder_name.startswith(class_name) or class_name.startswith(folder_name)):
 		return True
@@ -89,16 +112,16 @@ def is_similar(folder_name, class_):
 			return folder_name.replace(suffix, str(class_suffixes[suffix])) == class_name
 
 def find_assignments_folder(path, folder_name):
-	for name in all_classes:
+	for class_ in all_classes:
 		# Folder has been found.
-		if folder_name.lower() == name or is_similar(folder_name, all_classes[name]):
+		if folder_name.lower() == class_ or is_similar(folder_name, all_classes[class_]['name']):
 			sub_folders = next(os.walk(path))[1]
 			# Search for possible assignment sub-folders.
 			for sub_folder in sub_folders:
 				name_list = ['übungsblätter', 'blätter', 'assignments']
 				if any(x in sub_folder.lower() for x in name_list):
-					return (name, os.path.join(folder_name, sub_folder))
-			return (name, folder_name)
+					return (class_, os.path.join(folder_name, sub_folder))
+			return (class_, folder_name)
 	return None
 
 def select_folder_manually(choice):
