@@ -142,7 +142,7 @@ class Scraper:
 			str: The name of the link of the downloaded assignment.
 
 		"""
-		format = class_['assignment']['format']
+		format = class_['assignment']['link_format']
 		# Split (optional) path in format.
 		values = format.split('/')
 		# If the path has been specifed, the assignment is at [1]
@@ -189,7 +189,7 @@ class Scraper:
 		with logger.bar("Opening page specified by link attribute.."):
 			self.driver.get(class_['link'])
 		
-		format = class_['assignment']['format']
+		format = class_['assignment']['link_format']
 		assignment = self.format_assignment_name(format, assignment_num)
 
 		with logger.bar("Downloading '{}' from '{}'".format(assignment, class_['name']), True):
