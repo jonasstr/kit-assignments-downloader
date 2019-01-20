@@ -82,7 +82,7 @@ def echo(text, is_prompt=False):
 	click.echo(color + text)
 
 def prompt(text):
-	return click.prompt(Fore.CYAN + text)
+	return click.prompt(Fore.CYAN + "> " + text)
 
 def confirm(text, default=False):
 	suffix = " (Y/n) [y]: " if default else " (y/N) [n]: "
@@ -90,7 +90,18 @@ def confirm(text, default=False):
 
 @click.group(context_settings=dict(help_option_names=['-h', '--help']))
 def main():
-	'''Test
+	'''Thank you for using the KIT Assignments Downloader!\n
+	In order to download assignments make sure the setup was successful 
+	(run 'kita setup' again if it wasn't).
+
+	To get started, just use the 'kita update la' command
+	where 'la' is one of your courses.\n
+	If you only want to download a specific assignment, use
+	'kita get la 9' where '9' is the assignment number.
+
+	In case the download isn't working or you encounter any
+	bugs/crashes please visit github.com/jonasstr/kita and
+	create an issue or contact me via email: uzxhf@student.kit.edu.
 	'''
 	print("MAIN")
 
@@ -160,10 +171,10 @@ def show_select_folder_manually_dialog(choice):
 		tuple: The name of the selected class and the path chosen from the folder selection dialog window.
 
 	'''
-	class_name = prompt("> Which classes are missing? Choose from {}".format(choice))
+	class_name = prompt("Which classes are missing? Choose from {}".format(choice))
 	while not class_name.lower() in all_classes.keys():
 		echo("Error: invalid input")
-		class_name = prompt("> Which classes are missing? Choose from {}".format(choice))
+		class_name = prompt("Which classes are missing? Choose from {}".format(choice))
 	echo("Choose a location for saving your {} classes:".format(class_name.upper()), is_prompt=True)
 	return (class_name, filedialog.askdirectory())
 
@@ -257,8 +268,8 @@ def setup_user():
 		"settings (just press Enter to\naccept a default value, if one is given in brackets).\n")
 
 	data = {}
-	data['user_name'] = prompt("> Enter your correct ilias user name").strip()
-	data['password'] = prompt("> Enter your ilias password").strip()
+	data['user_name'] = prompt("Enter your correct ilias user name").strip()
+	data['password'] = prompt("Enter your ilias password").strip()
 	echo("\nChoose a location for saving your assignments. If you already\n"
 		"downloaded assignments manually please choose your KIT folder\nfor auto-detection.")
 	echo("Select the root path for your assignments from the dialog window:", is_prompt=True)
@@ -281,26 +292,10 @@ def disable_event():
 @click.option('--user', '-u', is_flag=True, help="Setup the user.yml file")
 def setup(config, user):
 
-	#global root
-	#root = tk.Tk()
-	#root.withdraw()
-	## Make it almost invisible - no decorations, 0 size, top left corner.
-	#root.overrideredirect(True)
-	#root.geometry('0x0+0+0')	
-	## Show window again and lift it to top so it can get focus,
-	## otherwise dialogs will end up behind the terminal.
-	#root.deiconify()
-	#root.lift()
-	#root.focus_force()
-
 	root = tk.Tk() 
 	root.withdraw()
-	root.wm_attributes("-topmost", 1)
+	root.wm_attributes("-topmost", True)
 
-	#filenames = filedialog.askopenfilenames() # Or some other dialog
-
-	#root.overrideredirect(True)
-	#root.protocol("WM_DELETE_WINDOW", disable_event)
 	# Setup user.yml if either the --user option has been provided or no options at all.
 	if user or user == config:
 		if not setup_user():
