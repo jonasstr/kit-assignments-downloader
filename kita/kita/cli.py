@@ -6,17 +6,20 @@ import tkinter as tk
 from tkinter import filedialog
 import traceback
 
+from colorama import Fore, Style
+from colorama import init
 import click
-from selenium import webdriver
-from selenium.webdriver.firefox.options import Options
 from logging.handlers import RotatingFileHandler
 from ruamel.yaml import YAML
+from selenium import webdriver
+from selenium.webdriver.firefox.options import Options
 
 import core
 from misc.logger import Logger
 import misc.utils as utils
 
-
+# Initialize colorama.
+init()
 yaml = YAML(typ='rt')
 yaml.indent(mapping=2, sequence=4, offset=2)
 yaml.compact(seq_seq=False, seq_map=False)
@@ -24,10 +27,10 @@ yaml.compact(seq_seq=False, seq_map=False)
 user_yml_path = os.path.join(click.get_app_dir("kita"), "user.yml")
 cfg_yml_path = os.path.join(click.get_app_dir("kita"), "config.yml")
 
-with open("user.yml", encoding='utf-8') as user:
-	user_data = yaml.load(user)
-	download_path = user_data['download_path']
-
+#with open("user.yml", encoding='utf-8') as user:
+#	user_data = yaml.load(user)
+#	download_path = user_data['download_path']
+#
 with open("config.yml", encoding='utf-8') as config:
 	config_data = yaml.load(config)
 	all_classes = config_data['classes']
@@ -72,6 +75,16 @@ def is_range(value):
 def is_sequence(value):
 	return re.search('^\d+(?:,\d+)*$', value)
 
+def echo(text, color=Style.RESET_ALL):
+	click.echo(color + text)
+
+def prompt(text):
+	return click.prompt(Fore.CYAN + text)
+
+def confirm(text, default=False):
+	suffix = " (Y/n) [y]: " if default else " (y/N) [n]: "
+	return click.confirm(Fore.CYAN + "> " + text, default=default, show_default=False, prompt_suffix = suffix)
+
 @click.group(context_settings=dict(help_option_names=['-h', '--help']))
 def main():
 	'''Test
@@ -102,7 +115,6 @@ def is_similar(folder_name, class_name):
 		the only differnce between the strings are the file endings (roman instead of latin digits).
 
 	'''
-	class_name = class_['name']
 	if (folder_name.startswith(class_name) or class_name.startswith(folder_name)):
 		return True
 	class_suffixes = {'I': 1, 'II': 2, 'III': 3}
@@ -145,17 +157,17 @@ def show_select_folder_manually_dialog(choice):
 		tuple: The name of the selected class and the path chosen from the folder selection dialog window.
 
 	'''
-	class_name = click.prompt("Which classes are missing? Choose from {}".format(choice))
+	class_name = prompt("> Which classes are missing? Choose from {}".format(choice))
 	while not class_name.lower() in all_classes.keys():
-		click.echo("Error: invalid input")
-		class_name = click.prompt("Which classes are missing? Choose from {}".format(choice))
-	click.echo("Choose a location for saving your {} classes.".format(class_name.upper()))
+		echo("Error: invalid input")
+		class_name = prompt("> Which classes are missing? Choose from {}".format(choice))
+	echo("> Choose a location for saving your {} classes:".format(class_name.upper()), color=Fore.CYAN)
 	return (class_name, filedialog.askdirectory())
 
 def show_create_class_folders_dialog(assignment_folders, root_path):
 	'''
 	'''
-	if click.confirm("Create class folders in '{}'?".format(root_path)):
+	if confirm("Create class folders in '{}'?".format(root_path)):
 		download_dir = os.path.join(root_path, "Downloads")
 		os.makedirs(download_dir, exist_ok=True)
 		with open('config.yml', 'rb') as cfg_path:
@@ -169,15 +181,15 @@ def show_create_class_folders_dialog(assignment_folders, root_path):
 				config['classes'][class_key]['path'] = class_dir
 		with open('config.yml', 'w', encoding='utf-8') as cfg_path:
 			yaml.dump(config, cfg_path)
-		click.echo("Downloads will be saved to '{}'.".format(utils.reformat(download_dir)))
+		echo("Downloads will be saved to '{}'.".format(utils.reformat(download_dir)))
 
 def show_kit_folder_detected_dialog(assignment_folders, root_path):	
 
-	click.echo("\nPossible KIT folder detected:")
+	echo("\nPossible KIT folder detected:")
 	added_classes = []
 	for folder in assignment_folders:
 		message = utils.reformat("Save {} assignments to '{}' folder?".format(folder[0].upper(), folder[1]))
-		if click.confirm(message, default=True):
+		if confirm(message, default=True):
 			added_classes.append(folder[0])
 
 	if not added_classes:
@@ -186,7 +198,7 @@ def show_kit_folder_detected_dialog(assignment_folders, root_path):
 
 	selected = ', '.join(class_.upper() for class_ in added_classes)
 	choice = ', '.join(key.upper() for key in all_classes.keys() if key not in added_classes)
-	while choice and not click.confirm("Are these all classes: {}?".format(selected)):
+	while choice and not confirm("Are these all classes: {}?".format(selected), default=True):
 		selection = show_select_folder_manually_dialog(choice)
 		class_key = selection[0].lower()
 		selected_path = selection[1]
@@ -198,7 +210,7 @@ def show_kit_folder_detected_dialog(assignment_folders, root_path):
 			# Open config.yml in read binary mode.
 			config = yaml.load(open('config.yml', 'rb'))
 			config['classes'][class_key]['path'] = selected_path
-			click.echo("{} assignments will be saved to '{}'.".format(class_key.upper(), utils.reformat(selected_path)))
+			echo("{} assignments will be saved to '{}'.".format(class_key.upper(), utils.reformat(selected_path)))
 			with open('config.yml', 'w', encoding='utf-8') as cfg_path:
 				yaml.dump(config, cfg_path)
 
@@ -213,11 +225,11 @@ def setup_config():
 			if file_size > 0 and 'destination' in user_data and 'root_path' in user_data['destination']:
 				root_path = user_data['destination']['root_path']
 			else: 
-				click.echo("\nKita has not been configured correctly (empty config file).\nUse 'kita setup --user' instead.")
+				echo("\nKita has not been configured correctly (empty config file).\nUse 'kita setup --user' instead.")
 				return False
 
 		if not os.path.isdir(root_path):
-			click.echo("\nKita has not been configured correctly (root_path not found).\nUse 'kita setup --user' instead.")
+			echo("\nKita has not been configured correctly (root_path not found).\nUse 'kita setup --user' instead.")
 			return False
 
 		sub_folders = next(os.walk(root_path))[1]			
@@ -230,24 +242,30 @@ def setup_config():
 	
 		if assignment_folders:
 			show_kit_folder_detected_dialog(assignment_folders, root_path)
+		return True
 	else: return False
-	return True
 
 def setup_user():
 	# user.yml already exists.
 	if os.path.isfile(user_yml_path):
-		if not click.confirm("\nKita is already set up. Overwrite existing config?"):
+		if not confirm("Kita is already set up. Overwrite existing config?"):
 			return False
+
+
+	echo("\nWelcome to the Kita 1.0.0 setup utility.\n\nPlease enter values for the following "
+		"settings (just press Enter to\naccept a default value, if one is given in brackets).\n")
+
 	data = {}
-	data['user_name'] = click.prompt("Please enter your correct ilias user name").strip()
-	data['password'] = click.prompt("Please enter your ilias password").strip()
-	click.echo("\nChoose a location for saving your assignments.\nIf you already downloaded assignments manually "
-		"please choose your KIT folder for auto-detection.")
+	data['user_name'] = prompt("> Enter your correct ilias user name").strip()
+	data['password'] = prompt("> Enter your ilias password").strip()
+	echo("\nChoose a location for saving your assignments. If you already\n"
+		"downloaded assignments manually please choose your KIT folder\nfor auto-detection.")
+	echo("> Select the root path for your assignments:", color=Fore.CYAN)
 	
 	selected_path = filedialog.askdirectory()
 	data['destination'] = {}
 	data['destination']['root_path'] = selected_path
-	click.echo("Downloads will be saved to '{}'.".format(utils.reformat(selected_path)))
+	echo("Downloads will be saved to '{}'.".format(utils.reformat(selected_path)))
 
 	os.makedirs(os.path.dirname(user_yml_path), exist_ok=True)
 	with open(user_yml_path, 'w', encoding='utf-8') as user_path:
@@ -264,14 +282,14 @@ def setup(config, user):
 	# Setup user.yml if either the --user option has been provided or no options at all.
 	if user or user == config:
 		if not setup_user():
-			click.echo("Setup cancelled.")
+			echo("Setup cancelled.")
 			return
 	# Setup config.yml if either the --config option has been provided or no options at all.
 	if config or user == config:
 		if not setup_config():
-			click.echo("Setup cancelled.")
+			echo("Setup cancelled.")
 			return
-	click.echo("\nSetup successful. Type 'kita --help' for details.")	
+	echo("\nSetup successful. Type 'kita --help' for details.")	
 
 
 @main.command()
