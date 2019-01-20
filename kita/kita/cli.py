@@ -75,7 +75,10 @@ def is_range(value):
 def is_sequence(value):
 	return re.search('^\d+(?:,\d+)*$', value)
 
-def echo(text, color=Style.RESET_ALL):
+def echo(text, is_prompt=False):
+	color = Fore.CYAN if is_prompt else Style.RESET_ALL
+	if is_prompt:
+		text = "> " + text
 	click.echo(color + text)
 
 def prompt(text):
@@ -161,27 +164,26 @@ def show_select_folder_manually_dialog(choice):
 	while not class_name.lower() in all_classes.keys():
 		echo("Error: invalid input")
 		class_name = prompt("> Which classes are missing? Choose from {}".format(choice))
-	echo("> Choose a location for saving your {} classes:".format(class_name.upper()), color=Fore.CYAN)
+	echo("Choose a location for saving your {} classes:".format(class_name.upper()), is_prompt=True)
 	return (class_name, filedialog.askdirectory())
 
 def show_create_class_folders_dialog(assignment_folders, root_path):
 	'''
 	'''
-	if confirm("Create class folders in '{}'?".format(root_path)):
-		download_dir = os.path.join(root_path, "Downloads")
-		os.makedirs(download_dir, exist_ok=True)
-		with open('config.yml', 'rb') as cfg_path:
-			config = yaml.load(cfg_path)
-		for folder in assignment_folders:
-			class_key = folder[0]
-			if class_key in all_classes:
-				class_name = config['classes'][class_key]['name'].replace('/','-').replace('\\','-')
-				class_dir = os.path.join(download_dir, class_name)
-				os.makedirs(class_dir, exist_ok=True)
-				config['classes'][class_key]['path'] = class_dir
-		with open('config.yml', 'w', encoding='utf-8') as cfg_path:
-			yaml.dump(config, cfg_path)
-		echo("Downloads will be saved to '{}'.".format(utils.reformat(download_dir)))
+	download_dir = os.path.join(root_path, "Downloads")
+	os.makedirs(download_dir, exist_ok=True)
+	with open('config.yml', 'rb') as cfg_path:
+		config = yaml.load(cfg_path)
+	for folder in assignment_folders:
+		class_key = folder[0]
+		if class_key in all_classes:
+			class_name = config['classes'][class_key]['name'].replace('/','-').replace('\\','-')
+			class_dir = os.path.join(download_dir, class_name)
+			os.makedirs(class_dir, exist_ok=True)
+			config['classes'][class_key]['path'] = class_dir
+	with open('config.yml', 'w', encoding='utf-8') as cfg_path:
+		yaml.dump(config, cfg_path)
+	echo("Downloads will be saved to '{}'.".format(utils.reformat(download_dir)))
 
 def show_kit_folder_detected_dialog(assignment_folders, root_path):	
 
@@ -251,7 +253,6 @@ def setup_user():
 		if not confirm("Kita is already set up. Overwrite existing config?"):
 			return False
 
-
 	echo("\nWelcome to the Kita 1.0.0 setup utility.\n\nPlease enter values for the following "
 		"settings (just press Enter to\naccept a default value, if one is given in brackets).\n")
 
@@ -260,7 +261,7 @@ def setup_user():
 	data['password'] = prompt("> Enter your ilias password").strip()
 	echo("\nChoose a location for saving your assignments. If you already\n"
 		"downloaded assignments manually please choose your KIT folder\nfor auto-detection.")
-	echo("> Select the root path for your assignments:", color=Fore.CYAN)
+	echo("Select the root path for your assignments from the dialog window:", is_prompt=True)
 	
 	selected_path = filedialog.askdirectory()
 	data['destination'] = {}
@@ -272,13 +273,34 @@ def setup_user():
 		yaml.dump(data, user_path)
 	return True
 
+def disable_event():
+	pass
+
 @main.command()
 @click.option('--config', '-cf', is_flag=True, help="Setup the classes / config.yml file")
 @click.option('--user', '-u', is_flag=True, help="Setup the user.yml file")
 def setup(config, user):
 
-	root = tk.Tk()
+	#global root
+	#root = tk.Tk()
+	#root.withdraw()
+	## Make it almost invisible - no decorations, 0 size, top left corner.
+	#root.overrideredirect(True)
+	#root.geometry('0x0+0+0')	
+	## Show window again and lift it to top so it can get focus,
+	## otherwise dialogs will end up behind the terminal.
+	#root.deiconify()
+	#root.lift()
+	#root.focus_force()
+
+	root = tk.Tk() 
 	root.withdraw()
+	root.wm_attributes("-topmost", 1)
+
+	#filenames = filedialog.askopenfilenames() # Or some other dialog
+
+	#root.overrideredirect(True)
+	#root.protocol("WM_DELETE_WINDOW", disable_event)
 	# Setup user.yml if either the --user option has been provided or no options at all.
 	if user or user == config:
 		if not setup_user():
@@ -316,7 +338,7 @@ def get(class_names, assignment_num, move, all, headless):
 	
 	driver = webdriver.Firefox(firefox_profile=create_profile(), options=get_options() if headless else None)
 
-	scraper = kita.Scraper(driver, user_data)
+	scraper = core.Scraper(driver, user_data)
 	classes_to_iterate = all_classes if all else class_names
 	
 	for name in classes_to_iterate:
@@ -340,7 +362,7 @@ def update(class_names, all, headless):
 	print("UPDATE")
 	driver = webdriver.Firefox(firefox_profile=create_profile(), options=get_options() if headless else None)
 
-	scraper = kita.Scraper(driver, user_data)
+	scraper = core.Scraper(driver, user_data)
 	classes_to_iterate = all_classes if all else class_names
 	
 	for name in classes_to_iterate:
