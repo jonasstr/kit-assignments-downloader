@@ -25,15 +25,56 @@ yaml.indent(mapping=2, sequence=4, offset=2)
 yaml.compact(seq_seq=False, seq_map=False)
 
 user_yml_path = os.path.join(click.get_app_dir("kita"), "user.yml")
-cfg_yml_path = os.path.join(click.get_app_dir("kita"), "config.yml")
+print(os.sep)
+print(os.path.abspath(user_yml_path))
+cfg_yml_path = "config.yml"
 
 #with open("user.yml", encoding='utf-8') as user:
 #	user_data = yaml.load(user)
-#	download_path = user_data['download_path']
 #
-with open("config.yml", encoding='utf-8') as config:
-	config_data = yaml.load(config)
-	all_classes = config_data['classes']
+#with open("config.yml", encoding='utf-8') as config:
+#	config_data = yaml.load(config)
+#	all_courses = config_data['courses']
+
+user_data = None
+all_courses = None
+
+def load_user_yml():
+	# Make sure user.yml exists.
+	if os.path.isfile(user_yml_path):
+		try:
+			# Open user.yml in read binary mode.
+			with open(user_yml_path, 'rb') as cfg:
+				user_data = yaml.load(cfg)
+		except Exception as e:
+			raise
+			click.echo("Kita has not been configured correctly (cannot read user.yml).\n"
+				"Use 'kita setup' before downloading assignments.")
+	return user_data
+
+def load_config_yml():
+	if os.path.isfile(cfg_yml_path):
+		try:
+			# Open config.yml in read binary mode.
+			with open(cfg_yml_path, 'rb') as cfg:
+				config_data = yaml.load(cfg)
+		except Exception as e:
+			raise
+			click.echo("Kita has not been configured correctly (cannot read config.yml).\n"
+				"Use 'kita setup' before downloading assignments.")
+	return config_data
+
+def get_all_courses():
+	global all_courses
+	if not all_courses:
+		all_courses = load_config_yml()['courses']
+	return all_courses
+
+def get_download_path():
+	global user_data
+	if not user_data:
+		user_data = load_user_yml()
+	return user_data['destination']['root_path']
 
 def get_options():
 	'''
@@ -53,6 +94,11 @@ def create_profile():
 		The Firefox profile.
 	"""
 	profile = webdriver.FirefoxProfile()
+	# Set download location
+	profile.set_preference("browser.download.folderList", 2)
+	profile.set_preference("browser.download.dir", get_download_path())
+	print(get_download_path())
+
 	# Close download window immediately
 	profile.set_preference("browser.download.manager.showWhenStarting", False)
 	profile.set_preference("browser.download.manager.closeWhenDone", True)
@@ -89,13 +135,16 @@ def confirm(text, default=False):
 	return click.confirm(Fore.CYAN + "> " + text, default=default, show_default=False, prompt_suffix = suffix)
 
 @click.group(context_settings=dict(help_option_names=['-h', '--help']))
-def main():
-	'''Thank you for using the KIT Assignments Downloader!\n
+@click.pass_context
+def main(ctx):
+	'''Thank you for using the KIT Assignments Downloader!
+
 	In order to download assignments make sure the setup was successful 
-	(run 'kita setup' again if it wasn't).
+	(run 'kita setup' again if not).
 
 	To get started, just use the 'kita update la' command
-	where 'la' is one of your courses.\n
+	where 'la' is one of your courses.
+
 	If you only want to download a specific assignment, use
 	'kita get la 9' where '9' is the assignment number.
 
@@ -103,7 +152,9 @@ def main():
 	bugs/crashes please visit github.com/jonasstr/kita and
 	create an issue or contact me via email: uzxhf@student.kit.edu.
 	'''
-	print("MAIN")
+	if ctx.invoked_subcommand is not 'setup':
+		print(ctx.invoked_subcommand)
+
 
 @main.command()
 @click.argument('type', required=True, type=click.Choice(['config', 'user']))
@@ -114,28 +165,28 @@ def view(type):
 		print("open user")
 
 
-def is_similar(folder_name, class_name):
-	'''Checks whether a given folder name is similar to the full name of a config.yml class
-		or is equal to the class key (e.g. la).
+def is_similar(folder_name, course_name):
+	'''Checks whether a given folder name is similar to the full name of a config.yml course
+		or is equal to the course key (e.g. la).
 
 	"Similar" in this case only refers to the ending of the folder name.
 
 	Args:
 		folder_name (str): The name of the folder to check.
-		class_name (str): The class key or full name to compare the folder name to.
+		course_name (str): The course key or full name to compare the folder name to.
 
 	Returns:
-		Whether the folder_name is included in the class_name or vice versa, or whether
+		Whether the folder_name is included in the course_name or vice versa, or whether
 		the only differnce between the strings are the file endings (roman instead of latin digits).
 
 	'''
-	if (folder_name.startswith(class_name) or class_name.startswith(folder_name)):
+	if (folder_name.startswith(course_name) or course_name.startswith(folder_name)):
 		return True
-	class_suffixes = {'I': 1, 'II': 2, 'III': 3}
-	for suffix in class_suffixes:
+	course_suffixes = {'I': 1, 'II': 2, 'III': 3}
+	for suffix in course_suffixes:
 		if folder_name.endswith(suffix):
-			# Check if the folder name is equivalent to the class name apart from the roman suffix.
-			return folder_name.replace(suffix, str(class_suffixes[suffix])) == class_name
+			# Check if the folder name is equivalent to the course name apart from the roman suffix.
+			return folder_name.replace(suffix, str(course_suffixes[suffix])) == course_name
 
 def find_assignments_folder(folder_path, folder_name):
 	'''Searches for a possible folder containing the assignments based on the folder name.
@@ -145,87 +196,94 @@ def find_assignments_folder(folder_path, folder_name):
 		folder_name (str): The name of the folder.
 
 	Returns:
-		tuple: The class key and the absolute path of the found folder, None if no assignment folder was found. 
+		tuple: The course key and the absolute path of the found folder, None if no assignment folder was found. 
 
 	'''
-	for class_ in all_classes:
+	for course_ in all_courses:
 		# Folder has been found.
-		if folder_name.lower() == class_ or is_similar(folder_name, all_classes[class_]['name']):
+		if folder_name.lower() == course_ or is_similar(folder_name, all_courses[course_]['name']):
 			sub_folders = next(os.walk(folder_path))[1]
 			# Search for possible assignment sub-folders.
 			for sub_folder in sub_folders:
 				name_list = ['übungsblätter', 'blätter', 'assignments']
 				# Check whether the name of the sub-folder is either one of the above names.
 				if any(x in sub_folder.lower() for x in name_list):
-					return (class_, os.path.join(folder_name, sub_folder))
-			return (class_, folder_name)
+					return (course_, os.path.join(folder_name, sub_folder))
+			return (course_, folder_name)
 	return None
 
 def show_select_folder_manually_dialog(choice):
 	'''Prints the setup dialog for adding the location of additional assignments.
 
 	Args:
-		choice: The set of the possible classes to choose from.
+		choice: The set of the possible courses to choose from.
 
 	Returns:
-		tuple: The name of the selected class and the path chosen from the folder selection dialog window.
+		tuple: The name of the selected course and the path chosen from the folder selection dialog window.
 
 	'''
-	class_name = prompt("Which classes are missing? Choose from {}".format(choice))
-	while not class_name.lower() in all_classes.keys():
+	course_name = prompt("Which courses are missing? Choose from {}".format(choice))
+	while not course_name.lower() in all_courses.keys():
 		echo("Error: invalid input")
-		class_name = prompt("Which classes are missing? Choose from {}".format(choice))
-	echo("Choose a location for saving your {} classes:".format(class_name.upper()), is_prompt=True)
-	return (class_name, filedialog.askdirectory())
+		course_name = prompt("Which courses are missing? Choose from {}".format(choice))
+	echo("Choose a location for saving your {} courses:".format(course_name.upper()), is_prompt=True)
+	return (course_name, filedialog.askdirectory())
 
-def show_create_class_folders_dialog(assignment_folders, root_path):
+def show_create_course_folders_dialog(assignment_folders, root_path):
 	'''
 	'''
 	download_dir = os.path.join(root_path, "Downloads")
+	print("UZXHFH" + download_dir)
 	os.makedirs(download_dir, exist_ok=True)
 	with open('config.yml', 'rb') as cfg_path:
 		config = yaml.load(cfg_path)
 	for folder in assignment_folders:
-		class_key = folder[0]
-		if class_key in all_classes:
-			class_name = config['classes'][class_key]['name'].replace('/','-').replace('\\','-')
-			class_dir = os.path.join(download_dir, class_name)
-			os.makedirs(class_dir, exist_ok=True)
-			config['classes'][class_key]['path'] = class_dir
+		course_key = folder[0]
+		if course_key in all_courses:
+			course_name = config['courses'][course_key]['name'].replace('/','-').replace('\\','-')
+			course_dir = os.path.join(download_dir, course_name)
+			os.makedirs(course_dir, exist_ok=True)
+			config['courses'][course_key]['path'] = course_dir
 	with open('config.yml', 'w', encoding='utf-8') as cfg_path:
 		yaml.dump(config, cfg_path)
 	echo("Downloads will be saved to '{}'.".format(utils.reformat(download_dir)))
 
+def dump_course_path(course_key, course_path):
+	# Open config.yml in read binary mode.
+	config = yaml.load(open('config.yml', 'rb'))
+	config['courses'][course_key]['path'] = course_path
+	with open('config.yml', 'w', encoding='utf-8') as cfg_path:
+		yaml.dump(config, cfg_path)
+
+
 def show_kit_folder_detected_dialog(assignment_folders, root_path):	
 
 	echo("\nPossible KIT folder detected:")
-	added_classes = []
+	added_courses = []
 	for folder in assignment_folders:
-		message = utils.reformat("Save {} assignments to '{}' folder?".format(folder[0].upper(), folder[1]))
+		course_key = folder[0]
+		detected_path = folder[1]
+		message = utils.reformat("Save {} assignments to '{}' folder?".format(course_key.upper(), detected_path))
 		if confirm(message, default=True):
-			added_classes.append(folder[0])
+			added_courses.append(course_key)
+			dump_course_path(course_key, detected_path)
 
-	if not added_classes:
-		show_create_class_folders_dialog(assignment_folders, root_path)
+	if not added_courses:
+		show_create_course_folders_dialog(assignment_folders, root_path)
 		return
 
-	selected = ', '.join(class_.upper() for class_ in added_classes)
-	choice = ', '.join(key.upper() for key in all_classes.keys() if key not in added_classes)
-	while choice and not confirm("Are these all classes: {}?".format(selected), default=True):
+	selected = ', '.join(course_.upper() for course_ in added_courses)
+	choice = ', '.join(key.upper() for key in all_courses.keys() if key not in added_courses)
+	while choice and not confirm("Are these all courses: {}?".format(selected), default=True):
 		selection = show_select_folder_manually_dialog(choice)
-		class_key = selection[0].lower()
-		selected_path = selection[1]
+		added_courses.append(selection[0].lower())
+		selected = ', '.join(course_.upper() for course_ in added_courses)
+		choice = ', '.join(key for key in all_courses.keys() if key not in added_courses)
 
-		added_classes.append(class_key)
-		selected = ', '.join(class_.upper() for class_ in added_classes)
-		choice = ', '.join(key for key in all_classes.keys() if key not in added_classes)
+		selected_path = selection[1]
 		if selected_path:
-			# Open config.yml in read binary mode.
-			config = yaml.load(open('config.yml', 'rb'))
-			config['classes'][class_key]['path'] = selected_path
-			echo("{} assignments will be saved to '{}'.".format(class_key.upper(), utils.reformat(selected_path)))
-			with open('config.yml', 'w', encoding='utf-8') as cfg_path:
-				yaml.dump(config, cfg_path)
+			echo("{} assignments will be saved to '{}'.".format(course_key.upper(), utils.reformat(selected_path)))
+			dump_course_path(course_key, selected_path)
 
 def setup_config():
 	# Make sure user.yml has been set up.
@@ -274,10 +332,13 @@ def setup_user():
 		"downloaded assignments manually please choose your KIT folder\nfor auto-detection.")
 	echo("Select the root path for your assignments from the dialog window:", is_prompt=True)
 	
-	selected_path = filedialog.askdirectory()
+	root_path = os.path.abspath(filedialog.askdirectory())
+	print("SLCTED PATH: " + root_path)
 	data['destination'] = {}
-	data['destination']['root_path'] = selected_path
-	echo("Downloads will be saved to '{}'.".format(utils.reformat(selected_path)))
+	data['destination']['root_path'] = root_path
+	# Set default rename format.
+	data['destination']['rename_format'] = "Blatt$$"
+	echo("Downloads will be saved to '{}'.".format(utils.reformat(root_path)))
 
 	os.makedirs(os.path.dirname(user_yml_path), exist_ok=True)
 	with open(user_yml_path, 'w', encoding='utf-8') as user_path:
@@ -288,7 +349,7 @@ def disable_event():
 	pass
 
 @main.command()
-@click.option('--config', '-cf', is_flag=True, help="Setup the classes / config.yml file")
+@click.option('--config', '-cf', is_flag=True, help="Setup the courses / config.yml file")
 @click.option('--user', '-u', is_flag=True, help="Setup the user.yml file")
 def setup(config, user):
 
@@ -310,12 +371,12 @@ def setup(config, user):
 
 
 @main.command()
-@click.argument('class_names', nargs=-1, required=True, type=click.Choice(all_classes))
+@click.argument('course_names', nargs=-1, required=True, type=click.Choice(get_all_courses()))
 @click.argument('assignment_num')
 @click.option('--move', '-mv', is_flag=True, help="Move the downloaded assignments to the specified directory and rename them.")
-@click.option('--all', '-a', is_flag=True, help="Download assignments from all specified classes.")
+@click.option('--all', '-a', is_flag=True, help="Download assignments from all specified courses.")
 @click.option('--headless/--visible', '-hl/-v', default=True, help="Start the browser in headless mode (no visible UI).")
-def get(class_names, assignment_num, move, all, headless):
+def get(course_names, assignment_num, move, all, headless):
 	print("GET CALLED")
 
 	if is_positive_int(assignment_num):
@@ -333,14 +394,14 @@ def get(class_names, assignment_num, move, all, headless):
 	
 	driver = webdriver.Firefox(firefox_profile=create_profile(), options=get_options() if headless else None)
 
-	scraper = core.Scraper(driver, user_data)
-	classes_to_iterate = all_classes if all else class_names
+	scraper = core.Scraper(driver, user_data, get_download_path())
+	courses_to_iterate = all_courses if all else course_names
 	
-	for name in classes_to_iterate:
+	for name in courses_to_iterate:
 		try:
-			class_ = all_classes[name]
+			course_ = all_courses[name]
 			for num in assignments:
-				scraper.get(class_, num, move)
+				scraper.get(course_, num, move)
 		except (IOError, OSError):
 			print("Invalid destination path for this assignment!")
 		except:
@@ -350,21 +411,22 @@ def get(class_names, assignment_num, move, all, headless):
 	driver.quit()
 
 @main.command()
-@click.argument('class_names', nargs=-1, required=False, type=click.Choice(all_classes))
-@click.option('--all', '-a', is_flag=True, help="Update assignment directories for all specified classes.")
+@click.argument('course_names', nargs=-1, required=False, type=click.Choice(all_courses))
+@click.option('--all', '-a', is_flag=True, help="Update assignment directories for all specified courses.")
 @click.option('--headless/--visible', '-hl/-v', default=True,  help="Start the browser in headless mode (no visible UI).")
-def update(class_names, all, headless):
+def update(course_names, all, headless):
 	print("UPDATE")
 	driver = webdriver.Firefox(firefox_profile=create_profile(), options=get_options() if headless else None)
 
-	scraper = core.Scraper(driver, user_data)
-	classes_to_iterate = all_classes if all else class_names
+	scraper = core.Scraper(driver, user_data, get_download_path())
+	courses_to_iterate = all_courses if all else course_names
 	
-	for name in classes_to_iterate:
+	for name in courses_to_iterate:
 		try:
-			class_ = all_classes[name]
-			scraper.update_directory(class_)
+			course_ = all_courses[name]
+			scraper.update_directory(course_, name)
 		except (IOError, OSError):
+			raise
 			print("Invalid destination path for this assignment!")
 		except:
 			raise

@@ -12,10 +12,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 import yaml
 
-from misc.logger import Logger
+import misc.logger as logger
 
 class Scraper:
-	"""The core class of kita, implements all CLI commands.
+	"""The core class of kita, implements all webpage related commands.
 
 	Creates a new Scraper and a WebDriverWait object with a default 
 	maximum waiting time of 10 seconds.
@@ -29,12 +29,12 @@ class Scraper:
 			move_and_rename as well as the format specifying how all files should be renamed.
 
 	"""
-	def __init__(self, driver, user_data):
+	def __init__(self, driver, user_data, download_path):
 		self.driver = driver
 		self.wait = WebDriverWait(self.driver, 10)
 		self.main_page = "https://ilias.studium.kit.edu"
 		self.user_data = user_data
-		self.download_path = user_data['download_path']
+		self.download_path = download_path
 		self.dst = user_data['destination']
 
 	def on_any_page(self):
@@ -125,10 +125,10 @@ class Scraper:
 		num_digits = name.count('$')
 		return name.replace('$' * num_digits, str(assignment_num).zfill(num_digits))
 
-	def download(self, class_, assignment_num):
+	def download(self, course, assignment_num):
 		"""Downloads the specified assignment of the given class from ilias.
 
-		Retrieves the assignment name by replacing the format attribute of the given class
+		Retrieves the assignment name by replacing the format attribute of the given course
 		as specified in the config.yml file with the specified assignment number 
 		and append leading zeroes if necessary.
 
@@ -136,14 +136,14 @@ class Scraper:
 		a single '/', which will be moved to before downloading the assignment.
 		
 		Args:
-			class_: The class retrieved from config.yml to download.
+			course: The course retrieved from config.yml to download.
 			assignment_num (int): The number of the assignment to download.
 
 		Returns:
 			str: The name of the link of the downloaded assignment.
 
 		"""
-		format = class_['assignment']['link_format']
+		format = course['assignment']['link_format']
 		# Split (optional) path in format.
 		values = format.split('/')
 		# If the path has been specifed, the assignment is at [1]
@@ -154,12 +154,12 @@ class Scraper:
 		if len(values) == 2:
 			path = self.format_assignment_name(values[0], assignment_num)
 
-		with logger.bar("Downloading '{}' from '{}'".format(assignment, class_['name']), True):
-			# Open the class page in a new tab (and switch to it as specified in firefox preferences).
-			self.click_link(class_['name'], True)
+		with logger.bar("Downloading '{}' from '{}'".format(assignment, course['name']), True):
+			# Open the course page in a new tab (and switch to it as specified in firefox preferences).
+			self.click_link(course['name'], True)
 			self.switch_to_last_tab()
 			# Click on the assignments folder.
-			self.click_link(class_['assignment']['link_name'])
+			self.click_link(course['assignment']['link_name'])
 			if path:
 				# Click on the additional folder (if specified).
 				self.click_link(path)
@@ -171,15 +171,15 @@ class Scraper:
 			self.driver.switch_to.window(self.driver.window_handles[0])
 			return assignment
 
-	def download_from(self, class_, assignment_num):
+	def download_from(self, course, assignment_num):
 		"""Provides the ability to download an assignment from a different source than ilias.
 
-		The external link must be specified as the link attribute in the config.yml file of the given class.
+		The external link must be specified as the link attribute in the config.yml file of the given course.
 		Uses the assignment:format attribute in the config.yml file to determine the name of the link
 		of the assignment to download.
 
 		Args:
-			class_: The class retrieved from the config.yml file. Must include
+			course: The course retrieved from the config.yml file. Must include
 				a link attribute to specify the main url of the external site.
 			assignment_num (int): The number of the assignment to download.
 
@@ -188,25 +188,25 @@ class Scraper:
 			
 		"""
 		with logger.bar("Opening page specified by link attribute.."):
-			self.driver.get(class_['link'])
+			self.driver.get(course['link'])
 		
-		format = class_['assignment']['link_format']
+		format = course['assignment']['link_format']
 		assignment = self.format_assignment_name(format, assignment_num)
 
-		with logger.bar("Downloading '{}' from '{}'".format(assignment, class_['name']), True):
+		with logger.bar("Downloading '{}' from '{}'".format(assignment, course['name']), True):
 			self.driver.find_element_by_link_text(assignment).click()
 			time.sleep(1)
 			return assignment
 
-	def move_and_rename(self, assignment, class_, assignment_num):
+	def move_and_rename(self, assignment, course, assignment_num):
 		"""Moves and renames a downloaded assignment PDF to the specified destination folder.
 
 		Assumes that the name of the PDF is the same as the link of the assignment. If 
 		the file name is different, this must be specified as the file_format attribute of the 
-		given class in the config.yml file. The format_assignment_name method will then be used
+		given course in the config.yml file. The format_assignment_name method will then be used
 		to retrieve the correct file name.
 		
-		The file will be copied to the folder specified by the path attribute of the class
+		The file will be copied to the folder specified by the path attribute of the course
 		in the config.yml file relative to the root_path as specified in the user.yml file. 
 
 		It will be renamed based on the destination/rename_format attribute
@@ -215,70 +215,71 @@ class Scraper:
 		Args:
 			assignment (str): The name of the link text of the downloaded assignment.
 				By default, this method will search for a PDF file with this name.
-			class_ (dict): The previously downloaded class retrieved from the config.yml
+			course (dict): The previously downloaded course retrieved from the config.yml
 				file. Specifies the (optional) file format of the assignment PDF and 
 				the path to copy it to.
 			assignment_num (int): The assignment number of the downloaded assignment file.
 
 		"""
 		file_name = assignment
-		asgmt = class_['assignment']
+		asgmt = course['assignment']
 		if 'file_format' in asgmt:
 			file_name = self.format_assignment_name(asgmt['file_format'], assignment_num)
 
 		src = os.path.join(self.download_path, file_name + ".pdf")	
-		dst_folder = os.path.join(self.dst['root_path'], class_['path'])
+		dst_folder = os.path.join(self.dst['root_path'], course['path'])
 		dst_file = os.path.join(dst_folder, self.format_assignment_name(self.dst['rename_format'], assignment_num) + ".pdf")
 
-		with logger.bar("Moving assignment to {}".format("root\\" + class_['path']), True):
+		with logger.bar("Moving assignment to {}".format(dst_folder), True):
 			shutil.move(src, dst_file)
 
-	def get(self, class_, assignment_num, move):
+	def get(self, course, assignment_num, move):
 		assignment = None
-		if 'link' in class_:
-			assignment = self.download_from(class_, assignment_num)
+		if 'link' in course:
+			assignment = self.download_from(course, assignment_num)
 		else:
 			if not self.on_any_page(): self.to_home()
-			assignment = self.download(class_, assignment_num)
+			assignment = self.download(course, assignment_num)
 		if move:
-			self.move_and_rename(assignment, class_, assignment_num)
+			self.move_and_rename(assignment, course, assignment_num)
 
-	def latest_assignment(self, class_dir):
+	def latest_assignment(self, course_dir):
 		"""Finds the currently latest assignment in a given user directory.
 		
 		Args:
-			class_dir (dict): The absolute path to the class directory to search in.
+			course_dir (dict): The absolute path to the course directory to search in.
 
 		Returns:
-			int: The latest assignment number, 0 if no file matched the rename_format.
+			int: The latest assignment number, zero if no file matched the rename_format.
 
 		"""
 		rename_format = self.dst['rename_format'] + ".pdf"
 		current_assignment = 1
 		latest_assignment = None
 		while latest_assignment == None:
-			assignment_path = os.path.join(class_dir, self.format_assignment_name(rename_format, current_assignment))
+			assignment_path = os.path.join(course_dir, self.format_assignment_name(rename_format, current_assignment))
 			# Search for the current assignment PDF.
 			if not os.path.isfile(assignment_path):
 				latest_assignment = current_assignment - 1
 			else: current_assignment += 1
 		return latest_assignment
 
-	def update_directory(self, class_):
+	def update_directory(self, course, course_name):
 
-		class_dir = os.path.join(self.dst['root_path'], class_['path'])
-		latest = self.latest_assignment(class_dir)
+		course_dir = os.path.join(self.dst['root_path'], course['path'])
+		latest = self.latest_assignment(course_dir)
 
 		if (latest > 0):
 			assignment = self.format_assignment_name(self.dst['rename_format'], latest)
 			print("Detected latest assignment: {}".format(assignment))
-		else: print("No assignments found in given directory")
+		else: print("No assignments found in {} directory".format(course_name.upper()))
 
 		try:
 			while (True):
-				self.get(class_, latest + 1, True)
+				self.get(course, latest + 1, True)
 				latest += 1
 		except (IOError, OSError):
+			raise
 			print("Invalid destination path for this assignment!")
 		except:
 			raise
