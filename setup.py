@@ -7,18 +7,22 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as file:
 	long_description = file.read()
 
 setup(name='kita',
-	version='1.0.0',
+	version='0.1.0',
 	description='An unofficial assignments downloader for the KIT Ilias website.',
 	long_description=long_description,
 	long_description_content_type='text/markdown',
 	url='https://github.com/jonasstr/kita',
+	license='MIT',
+	author='Jonas Strittmatter',
 	author_email='uzxhf@student.kit.edu',
 
 	classifiers = [
-		'Intended Audience :: End Users/Desktop',
+		'Development Status :: 3 - ALPHA',
 		'License :: OSI Approved :: MIT License',
 		'Programming Language :: Python',
-		'Programming Language :: Python :: 3.6'
+		'Programming Language :: Python :: 3.6',
+		'Intended Audience :: End Users/Desktop',
+		'Topic :: Utilities'
 	],
 	packages=['kita', 'kita.misc'],	
 	package_data={
@@ -32,6 +36,6 @@ setup(name='kita',
 	],
 	entry_points='''
 		[console_scripts]
-		kita=kita.cli:main
+		kita=kita.cli:cli
 	'''
 )

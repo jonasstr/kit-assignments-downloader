@@ -136,7 +136,7 @@ def confirm(text, default=False):
 
 @click.group(context_settings=dict(help_option_names=['-h', '--help']))
 @click.pass_context
-def main(ctx):
+def cli(ctx):
 	'''Thank you for using the KIT Assignments Downloader!
 
 	In order to download assignments make sure the setup was successful 
@@ -156,7 +156,7 @@ def main(ctx):
 		print(ctx.invoked_subcommand)
 
 
-@main.command()
+@cli.command()
 @click.argument('type', required=True, type=click.Choice(['config', 'user']))
 def view(type):
 	if type == 'config':
@@ -348,7 +348,7 @@ def setup_user():
 def disable_event():
 	pass
 
-@main.command()
+@cli.command()
 @click.option('--config', '-cf', is_flag=True, help="Setup the courses / config.yml file")
 @click.option('--user', '-u', is_flag=True, help="Setup the user.yml file")
 def setup(config, user):
@@ -370,7 +370,7 @@ def setup(config, user):
 	echo("\nSetup successful. Type 'kita --help' for details.")	
 
 
-@main.command()
+@cli.command()
 @click.argument('course_names', nargs=-1, required=True, type=click.Choice(get_all_courses()))
 @click.argument('assignment_num')
 @click.option('--move', '-mv', is_flag=True, help="Move the downloaded assignments to the specified directory and rename them.")
@@ -410,7 +410,7 @@ def get(course_names, assignment_num, move, all, headless):
 	print("Exiting")
 	driver.quit()
 
-@main.command()
+@cli.command()
 @click.argument('course_names', nargs=-1, required=False, type=click.Choice(all_courses))
 @click.option('--all', '-a', is_flag=True, help="Update assignment directories for all specified courses.")
 @click.option('--headless/--visible', '-hl/-v', default=True,  help="Start the browser in headless mode (no visible UI).")
@@ -435,4 +435,4 @@ def update(course_names, all, headless):
 	driver.quit()
 
 if __name__ == '__main__':
-	main()
+	cli()
