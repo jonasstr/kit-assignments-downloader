@@ -17,11 +17,11 @@ To install this package open a console and type:
 
     pip install kita
   
-Before you can download anything, *kita* needs to know your ilias user name and password. To complete the installation, type:
+To complete the installation use the following command:
 
     kita setup
       
-Note: Your user name and password will be stored locally in a file called user.yml. **Do not share this file with anyone!**
+Note: The setup assistant requires you to input your ilias user name and password which will be stored locally in a file called user.yml. **Do not share this file!**
 
 ## Getting started
 
