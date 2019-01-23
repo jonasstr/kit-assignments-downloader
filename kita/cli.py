@@ -33,6 +33,17 @@ root_path = None
 all_courses = None
 
 def try_load_file(path, error_msg):
+	"""Tries to load the specified yaml file.
+	If the path is incorrect, reraises the exception and prints the specified error messsage.
+
+	Args:
+		path (str): The absolute of the yaml file to load.
+		error_msg: The error message to print in case the file could not be loaded.
+
+	Returns:
+		dict: The content of the file using yaml.load()
+
+	"""
 	try:
 		with open(path, 'rb') as file:
 			return yaml.load(file)
@@ -40,7 +51,11 @@ def try_load_file(path, error_msg):
 		raise
 		click.echo(error_msg)
 
+
 def load_data():
+	"""Loads the user.yml and config.yml files and stores their content in global variables.
+
+	"""
 	global user_data
 	user_data = try_load_file(user_yml_path,
 		error_msg = "Error, cannot find user.yml. \n"
@@ -51,75 +66,71 @@ def load_data():
 	all_courses = try_load_file(config_yml_path,
 		error_msg = "Error, cannot find config.yml.")['courses']
 
+
 # Load data on startup.
 load_data()
 
 def get_options():
-	'''
+	"""
 	Returns: 
 		The options for running Firefox in headless mode.
-	'''
+
+	"""
 	options = Options()
 	options.headless = True
 	return options
 
-def create_profile():
-	"""Creates a Firefox profile required for navigating on a webpage.
-	Sets the preferences allowing PDFs to be downloaded immediately as well as
-	navigating between tabs using keyboard shortcuts.
-	
-	Returns:
-		The Firefox profile.
-	"""
-	profile = webdriver.FirefoxProfile()
-	# Set download location
-	profile.set_preference("browser.download.folderList", 2)
-	profile.set_preference("browser.download.dir", user_data['destination']['root_path'])
-
-	# Close download window immediately
-	profile.set_preference("browser.download.manager.showWhenStarting", False)
-	profile.set_preference("browser.download.manager.closeWhenDone", True)
-	# Download PDF files without asking the user
-	profile.set_preference("pdfjs.disabled", True)
-	profile.set_preference("plugin.disable_full_page_plugin_for_types", "application/pdf")
-	profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/pdf")
-	# Don't switch between recently visited tabs
-	profile.set_preference("browser.ctrlTab.recentlyUsedOrder", False)
-	# Move directly to newly opened tab
-	profile.set_preference("browser.tabs.loadInBackground", False)
-	return profile
 
 def is_positive_int(value):
 	return re.search('^\d+$', value)
 
+
 def is_range(value):
 	return re.search('^\d+-\d+$', value)
+
 
 def is_sequence(value):
 	return re.search('^\d+(?:,\d+)*$', value)
 
+
 def echo(text, is_prompt=False):
+	"""Forwards the given text to click.echo() and optionally applies a different style to the text.
+
+	Args:
+		text (str): The text to print to the standard output.
+		is_prompt: Whether the text should be viewed as a user prompt.
+			If true, adds cyan color and a '>' symbol to the start of the string to be distinct from default output.
+
+	"""
 	color = Fore.CYAN if is_prompt else Style.RESET_ALL
 	if is_prompt:
 		text = "> " + text
 	click.echo(color + text)
 
+
 def prompt(text):
+	"""Forwards the given text to click.echo() and adds cyan color and a '>' symbol to the start of the string.
+
+	Args:
+		text (str): The text to print to the standard output.
+
+	"""
 	return click.prompt(Fore.CYAN + "> " + text)
+
 
 def confirm(text, default=False):
 	suffix = " (Y/n) [y]: " if default else " (y/N) [n]: "
-	return click.confirm(Fore.CYAN + "> " + text, default=default, show_default=False, prompt_suffix = suffix)
+	return click.confirm(Fore.CYAN + "> " + text, default=default, show_default=False, prompt_suffix=suffix)
+
 
 @click.version_option()
 @click.group(context_settings=dict(help_option_names=['-h', '--help']))
 @click.pass_context
 def cli(ctx):
-	load_data()
-	'''Thank you for using the KIT Assignments Downloader!
+	"""Thank you for using the KIT Assignments Downloader!
 
 	In order to download assignments make sure the setup was successful 
-	(run 'kita setup' again if not).
+	(otherwise run 'kita setup' again).
 
 	To get started, just use the 'kita update la' command
 	where 'la' is one of your courses.
@@ -130,7 +141,7 @@ def cli(ctx):
 	In case the download isn't working or you encounter any
 	bugs/crashes please visit github.com/jonasstr/kita and
 	create an issue or contact me via email: uzxhf@student.kit.edu.
-	'''
+	"""
 	if ctx.invoked_subcommand is not 'setup':
 		print(ctx.invoked_subcommand)
 
@@ -145,7 +156,7 @@ def view(type):
 
 
 def is_similar(folder_name, course_name):
-	'''Checks whether a given folder name is similar to the full name of a config.yml course
+	"""Checks whether a given folder name is similar to the full name of a config.yml course
 		or is equal to the course key (e.g. la).
 
 	"Similar" in this case only refers to the ending of the folder name.
@@ -158,7 +169,7 @@ def is_similar(folder_name, course_name):
 		Whether the folder_name is included in the course_name or vice versa, or whether
 		the only differnce between the strings are the file endings (roman instead of latin digits).
 
-	'''
+	"""
 	if (folder_name.startswith(course_name) or course_name.startswith(folder_name)):
 		return True
 	course_suffixes = {'I': 1, 'II': 2, 'III': 3}
@@ -167,8 +178,9 @@ def is_similar(folder_name, course_name):
 			# Check if the folder name is equivalent to the course name apart from the roman suffix.
 			return folder_name.replace(suffix, str(course_suffixes[suffix])) == course_name
 
+
 def find_assignments_folder(folder_path, folder_name):
-	'''Searches for a possible folder containing the assignments based on the folder name.
+	"""Searches for a possible folder containing the assignments based on the folder name.
 
 	Args:
 		folder_path (str): The absolute path of the assignment folder to search in.
@@ -177,7 +189,7 @@ def find_assignments_folder(folder_path, folder_name):
 	Returns:
 		tuple: The course key and the absolute path of the found folder, None if no assignment folder was found. 
 
-	'''
+	"""
 	for course_ in all_courses:
 		# Folder has been found.
 		if folder_name.lower() == course_ or is_similar(folder_name, all_courses[course_]['name']):
@@ -191,8 +203,9 @@ def find_assignments_folder(folder_path, folder_name):
 			return (course_, folder_name)
 	return None
 
+
 def show_select_folder_manually_dialog(choice):
-	'''Prints the setup dialog for adding the location of additional assignments.
+	"""Prints the setup dialog for adding the location of additional assignments.
 
 	Args:
 		choice: The set of the possible courses to choose from.
@@ -200,7 +213,7 @@ def show_select_folder_manually_dialog(choice):
 	Returns:
 		tuple: The name of the selected course and the path chosen from the folder selection dialog window.
 
-	'''
+	"""
 	course_name = prompt("Which courses are missing? Choose from {}".format(choice))
 	while not course_name.lower() in all_courses.keys():
 		echo("Error: invalid input")
@@ -208,9 +221,10 @@ def show_select_folder_manually_dialog(choice):
 	echo("Choose a location for saving your {} courses:".format(course_name.upper()), is_prompt=True)
 	return (course_name, filedialog.askdirectory())
 
+
 def show_create_course_folders_dialog(assignment_folders, root_path):
-	'''
-	'''
+	"""
+	"""
 	download_dir = os.path.join(root_path, "Downloads")
 	os.makedirs(download_dir, exist_ok=True)
 	with open(config_yml_path, 'rb') as cfg_path:
@@ -225,6 +239,7 @@ def show_create_course_folders_dialog(assignment_folders, root_path):
 	with open(config_yml_path, 'w', encoding='utf-8') as cfg_path:
 		yaml.dump(config, cfg_path)
 	echo("Downloads will be saved to '{}'.".format(utils.reformat(download_dir)))
+
 
 def dump_course_path(course_key, course_path):
 	# Open config.yml in read binary mode.
@@ -263,6 +278,7 @@ def show_kit_folder_detected_dialog(assignment_folders, root_path):
 			echo("{} assignments will be saved to '{}'.".format(course_key.upper(), utils.reformat(selected_path)))
 			dump_course_path(course_key, selected_path)
 
+
 def setup_config():
 	# Make sure user.yml has been set up.
 	if os.path.isfile(user_yml_path):
@@ -294,6 +310,7 @@ def setup_config():
 		return True
 	else: return False
 
+
 def setup_user():
 	# user.yml already exists.
 	if os.path.isfile(user_yml_path):
@@ -311,7 +328,6 @@ def setup_user():
 	echo("Select the root path for your assignments from the dialog window:", is_prompt=True)
 	
 	root_path = os.path.abspath(filedialog.askdirectory())
-	print("SLCTED PATH: " + root_path)
 	data['destination'] = {}
 	data['destination']['root_path'] = root_path
 	# Set default rename format.
@@ -323,8 +339,6 @@ def setup_user():
 		yaml.dump(data, user_path)
 	return True
 
-def disable_event():
-	pass
 
 @cli.command()
 @click.option('--config', '-cf', is_flag=True, help="Change the download locations for the courses.")
@@ -346,6 +360,34 @@ def setup(config, user):
 			echo("Setup cancelled.")
 			return
 	echo("\nSetup successful. Type 'kita --help' for details.")	
+
+
+def create_profile():
+	"""Creates a Firefox profile required for navigating on a webpage.
+	Sets the preferences allowing PDFs to be downloaded immediately as well as
+	navigating between tabs using keyboard shortcuts.
+	
+	Returns:
+		The Firefox profile.
+
+	"""
+	profile = webdriver.FirefoxProfile()
+	# Set download location
+	profile.set_preference("browser.download.folderList", 2)
+	profile.set_preference("browser.download.dir", user_data['destination']['root_path'])
+	# Close download window immediately
+	profile.set_preference("browser.download.manager.showWhenStarting", False)
+	profile.set_preference("browser.download.manager.closeWhenDone", True)
+	# Download PDF files without asking the user
+	profile.set_preference("pdfjs.disabled", True)
+	profile.set_preference("plugin.disable_full_page_plugin_for_types", "application/pdf")
+	profile.set_preference("browser.helperApps.neverAsk.saveToDisk", "application/pdf")
+	# Don't switch between recently visited tabs
+	profile.set_preference("browser.ctrlTab.recentlyUsedOrder", False)
+	# Move directly to newly opened tab
+	profile.set_preference("browser.tabs.loadInBackground", False)
+	return profile
+
 
 @cli.command()
 @click.argument('course_names', nargs=-1, required=True, type=click.Choice(all_courses))

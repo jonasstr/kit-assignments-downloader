@@ -14,9 +14,8 @@ from selenium.webdriver.common.keys import Keys
 from kita.misc import logger
 
 class Scraper:
-	"""The core class of kita, implements all webpage related commands.
-
-	Creates a new Scraper and a WebDriverWait object with a default 
+	"""Implements all webpage related commands such as downloading and moving assignments.
+	Constructs a new Scraper and a WebDriverWait object with a default 
 	maximum waiting time of 10 seconds.
 
 	Args: 
@@ -111,7 +110,8 @@ class Scraper:
 
 	def format_assignment_name(self, name, assignment_num):
 		"""Formats the specified assignment name by replacing all $-signs with the assignment
-		number (appends leading zeroes if the amount of consecutive $-signs is higher than
+		number.
+		Appends leading zeroes if the amount of consecutive $-signs is higher than
 		the assignment number).
 	
 		Args:
