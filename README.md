@@ -4,11 +4,12 @@ An unofficial KIT assignments downloader for [ilias.studium.kit.edu](http://ilia
 
 ## Why do I need this?
 
-If you feel like logging in to Ilias each week and downloading the latest assignments manually takes too much time, then this project might be for you. Just type in ``kita update`` followed by the name of the class and kita will automatically log in to your Ilias account, download the latest assignments of all your classes and copy them to your preferred KIT folder.
+Using *kita*, you will **NEVER** have to care about keeping your assignments up to date ever again.  
+*Kita* automatically logs in to your ilias account, downloads the latest assignment of all your classes and moves them to the correct folders in your KIT directory - with just one command.
 
-## Prerequisites
+## Requirements
 
-If you are using Windows, make sure [Python 3](https://www.python.org/downloads/) (including pip) are installed on your computer. Also note that kita currently only supports the **Firefox** browser.
+If you are using Windows, make sure [Python 3](https://www.python.org/downloads/) (including pip and tkinter) is installed on your computer. Also note that kita currently only supports the **Firefox** browser.
 
 ## Installation and setup
  
@@ -16,17 +17,15 @@ To install this package open a console and type:
 
     pip install kita
   
-Before you can download anything, kita needs to know your ilias user name and password. This command will create a user.yml file containing your login credentials. In order to complete the installation, type:
+Before you can download anything, *kita* needs to know your ilias user name and password. To complete the installation, type:
 
     kita setup
       
-Note: Your user name and password will only be stored locally. **Never share the user.yml file!** Feel free to check out the source code for more info.
+Note: Your user name and password will be stored locally in a file called user.yml. **Do not share this file with anyone!**
 
 ## Getting started
 
-After the setup is complete, you can start downloading assignments. Type `-h` or `--help` after a specific command for more information about that command.   
-If you want to add additional classes, see [adding new classes](#adding-new-classes).
-
+After the setup is complete, you can start downloading assignments. Type `-h` or `--help` after a specific command for more information about that command.  
 ```
 kita update [OPTIONS] [CLASS_NAMES]...
 ```
