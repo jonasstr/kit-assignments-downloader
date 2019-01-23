@@ -25,7 +25,9 @@ yaml = YAML(typ='rt')
 yaml.indent(mapping=2, sequence=4, offset=2)
 yaml.compact(seq_seq=False, seq_map=False)
 
+gecko_path = os.path.join(Path(__file__).parents[1], "geckodriver.exe")
 user_yml_path = os.path.join(click.get_app_dir("kita"), "user.yml")
+config_yml_path = os.path.join(Path(__file__).parents[0], "config.yml")
 user_data = None
 root_path = None
 all_courses = None
@@ -46,7 +48,7 @@ def load_data():
 	global root_path
 	root_path = user_data['destination']['root_path']
 	global all_courses
-	all_courses = try_load_file(os.path.join(Path(__file__).parents[0], "config.yml"),
+	all_courses = try_load_file(config_yml_path,
 		error_msg = "Error, cannot find config.yml.")['courses']
 
 # Load data on startup.
@@ -211,7 +213,7 @@ def show_create_course_folders_dialog(assignment_folders, root_path):
 	'''
 	download_dir = os.path.join(root_path, "Downloads")
 	os.makedirs(download_dir, exist_ok=True)
-	with open('config.yml', 'rb') as cfg_path:
+	with open(config_yml_path, 'rb') as cfg_path:
 		config = yaml.load(cfg_path)
 	for folder in assignment_folders:
 		course_key = folder[0]
@@ -220,15 +222,15 @@ def show_create_course_folders_dialog(assignment_folders, root_path):
 			course_dir = os.path.join(download_dir, course_name)
 			os.makedirs(course_dir, exist_ok=True)
 			config['courses'][course_key]['path'] = course_dir
-	with open('config.yml', 'w', encoding='utf-8') as cfg_path:
+	with open(config_yml_path, 'w', encoding='utf-8') as cfg_path:
 		yaml.dump(config, cfg_path)
 	echo("Downloads will be saved to '{}'.".format(utils.reformat(download_dir)))
 
 def dump_course_path(course_key, course_path):
 	# Open config.yml in read binary mode.
-	config = yaml.load(open('config.yml', 'rb'))
+	config = yaml.load(open(config_yml_path, 'rb'))
 	config['courses'][course_key]['path'] = course_path
-	with open('config.yml', 'w', encoding='utf-8') as cfg_path:
+	with open(config_yml_path, 'w', encoding='utf-8') as cfg_path:
 		yaml.dump(config, cfg_path)
 
 
@@ -367,7 +369,9 @@ def get(course_names, assignment_num, move, all, headless):
 		print("Assignment number must be an integer or in the correct format!")
 		return
 	
-	driver = webdriver.Firefox(firefox_profile=create_profile(), options=get_options() if headless else None)
+	driver = webdriver.Firefox(firefox_profile=create_profile(),
+		executable_path=gecko_path,
+		options=get_options() if headless else None)
 
 	scraper = core.Scraper(driver, user_data, root_path)
 	courses_to_iterate = all_courses if all else course_names
@@ -390,8 +394,9 @@ def get(course_names, assignment_num, move, all, headless):
 @click.option('--all', '-a', is_flag=True, help="Update assignment directories for all specified courses.")
 @click.option('--headless/--visible', '-hl/-v', default=True,  help="Start the browser in headless mode (no visible UI).")
 def update(course_names, all, headless):
-	print("UPDATE")
-	driver = webdriver.Firefox(firefox_profile=create_profile(), options=get_options() if headless else None)
+	driver = webdriver.Firefox(firefox_profile=create_profile(),
+		executable_path=gecko_path,
+		options=get_options() if headless else None)
 
 	scraper = core.Scraper(driver, user_data, root_path)
 	courses_to_iterate = all_courses if all else course_names

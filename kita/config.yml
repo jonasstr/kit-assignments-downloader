@@ -11,7 +11,7 @@ courses:
   la:
     assignment: {link_format: Blatt$$, link_name: Übungen}
     name: Lineare Algebra 1
-    path: G:/KIT/Programmieren/WS18-19
+    path: E:/KIT/Sonstiges/WS18-19/Lineare Algebra I/Übungsblätter
   prg:
     assignment: {link_format: Übungsblatt $/assignment$$, link_name: Übungen}
     name: Programmieren
