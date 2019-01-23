@@ -1,5 +1,6 @@
 import logging
 import os
+from pathlib import Path
 import re
 import sys
 import tkinter as tk
@@ -25,56 +26,31 @@ yaml.indent(mapping=2, sequence=4, offset=2)
 yaml.compact(seq_seq=False, seq_map=False)
 
 user_yml_path = os.path.join(click.get_app_dir("kita"), "user.yml")
-print(os.sep)
-print(os.path.abspath(user_yml_path))
-cfg_yml_path = "config.yml"
-
-#with open("user.yml", encoding='utf-8') as user:
-#	user_data = yaml.load(user)
-#
-#with open("config.yml", encoding='utf-8') as config:
-#	config_data = yaml.load(config)
-#	all_courses = config_data['courses']
-
 user_data = None
+root_path = None
 all_courses = None
 
-def load_user_yml():
-	# Make sure user.yml exists.
-	if os.path.isfile(user_yml_path):
-		try:
-			# Open user.yml in read binary mode.
-			with open(user_yml_path, 'rb') as cfg:
-				user_data = yaml.load(cfg)
-		except Exception as e:
-			raise
-			click.echo("Kita has not been configured correctly (cannot read user.yml).\n"
-				"Use 'kita setup' before downloading assignments.")
-	return user_data
+def try_load_file(path, error_msg):
+	try:
+		with open(path, 'rb') as file:
+			return yaml.load(file)
+	except Exception as e:
+		raise
+		click.echo(error_msg)
 
-def load_config_yml():
-	if os.path.isfile(cfg_yml_path):
-		try:
-			# Open config.yml in read binary mode.
-			with open(cfg_yml_path, 'rb') as cfg:
-				config_data = yaml.load(cfg)
-		except Exception as e:
-			raise
-			click.echo("Kita has not been configured correctly (cannot read config.yml).\n"
-				"Use 'kita setup' before downloading assignments.")
-	return config_data
-
-def get_all_courses():
-	global all_courses
-	if not all_courses:
-		all_courses = load_config_yml()['courses']
-	return all_courses
-
-def get_download_path():
+def load_data():
 	global user_data
-	if not user_data:
-		user_data = load_user_yml()
-	return user_data['destination']['root_path']
+	user_data = try_load_file(user_yml_path,
+		error_msg = "Error, cannot find user.yml. \n"
+				"Use 'kita setup' before downloading assignments.")
+	global root_path
+	root_path = user_data['destination']['root_path']
+	global all_courses
+	all_courses = try_load_file(os.path.join(Path(__file__).parents[0], "config.yml"),
+		error_msg = "Error, cannot find config.yml.")['courses']
+
+# Load data on startup.
+load_data()
 
 def get_options():
 	'''
@@ -96,8 +72,7 @@ def create_profile():
 	profile = webdriver.FirefoxProfile()
 	# Set download location
 	profile.set_preference("browser.download.folderList", 2)
-	profile.set_preference("browser.download.dir", get_download_path())
-	print(get_download_path())
+	profile.set_preference("browser.download.dir", user_data['destination']['root_path'])
 
 	# Close download window immediately
 	profile.set_preference("browser.download.manager.showWhenStarting", False)
@@ -138,6 +113,7 @@ def confirm(text, default=False):
 @click.group(context_settings=dict(help_option_names=['-h', '--help']))
 @click.pass_context
 def cli(ctx):
+	load_data()
 	'''Thank you for using the KIT Assignments Downloader!
 
 	In order to download assignments make sure the setup was successful 
@@ -234,7 +210,6 @@ def show_create_course_folders_dialog(assignment_folders, root_path):
 	'''
 	'''
 	download_dir = os.path.join(root_path, "Downloads")
-	print("UZXHFH" + download_dir)
 	os.makedirs(download_dir, exist_ok=True)
 	with open('config.yml', 'rb') as cfg_path:
 		config = yaml.load(cfg_path)
@@ -350,8 +325,8 @@ def disable_event():
 	pass
 
 @cli.command()
-@click.option('--config', '-cf', is_flag=True, help="Setup the courses / config.yml file")
-@click.option('--user', '-u', is_flag=True, help="Setup the user.yml file")
+@click.option('--config', '-cf', is_flag=True, help="Change the download locations for the courses.")
+@click.option('--user', '-u', is_flag=True, help="Change the current user and the root path for downloads.")
 def setup(config, user):
 
 	root = tk.Tk() 
@@ -370,9 +345,8 @@ def setup(config, user):
 			return
 	echo("\nSetup successful. Type 'kita --help' for details.")	
 
-
 @cli.command()
-@click.argument('course_names', nargs=-1, required=True, type=click.Choice(get_all_courses()))
+@click.argument('course_names', nargs=-1, required=True, type=click.Choice(all_courses))
 @click.argument('assignment_num')
 @click.option('--move', '-mv', is_flag=True, help="Move the downloaded assignments to the specified directory and rename them.")
 @click.option('--all', '-a', is_flag=True, help="Download assignments from all specified courses.")
@@ -395,7 +369,7 @@ def get(course_names, assignment_num, move, all, headless):
 	
 	driver = webdriver.Firefox(firefox_profile=create_profile(), options=get_options() if headless else None)
 
-	scraper = core.Scraper(driver, user_data, get_download_path())
+	scraper = core.Scraper(driver, user_data, root_path)
 	courses_to_iterate = all_courses if all else course_names
 	
 	for name in courses_to_iterate:
@@ -419,7 +393,7 @@ def update(course_names, all, headless):
 	print("UPDATE")
 	driver = webdriver.Firefox(firefox_profile=create_profile(), options=get_options() if headless else None)
 
-	scraper = core.Scraper(driver, user_data, get_download_path())
+	scraper = core.Scraper(driver, user_data, root_path)
 	courses_to_iterate = all_courses if all else course_names
 	
 	for name in courses_to_iterate:
@@ -433,7 +407,7 @@ def update(course_names, all, headless):
 			raise
 			print("Assignment could not be found!")
 	print("Exiting")
-	driver.quit()
+	driver.quit()	
 
 if __name__ == '__main__':
 	cli()

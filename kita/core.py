@@ -31,7 +31,7 @@ class Scraper:
 	def __init__(self, driver, user_data, download_path):
 		self.driver = driver
 		self.wait = WebDriverWait(self.driver, 10)
-		self.main_page = "https://ilias.studium.kit.edu"
+		self.main_page = "https://ilias.studium.kit.edu/login.php"
 		self.user_data = user_data
 		self.download_path = download_path
 		self.dst = user_data['destination']
@@ -56,8 +56,7 @@ class Scraper:
 			self.driver.get(self.main_page)
 		
 		with logger.bar("Logging in.."):
-			# Click on login buttons.
-			self.driver.find_element_by_link_text('Anmelden').click()
+			# Click on login button.
 			self.driver.find_element_by_id('f807').click()
 		
 			# Fill in login credentials and login.
@@ -271,7 +270,7 @@ class Scraper:
 		if (latest > 0):
 			assignment = self.format_assignment_name(self.dst['rename_format'], latest)
 			print("Detected latest assignment: {}".format(assignment))
-		else: print("No assignments found in {} directory".format(course_name.upper()))
+		else: print("No assignments found in {} directory, starting at 1.".format(course_name.upper()))
 
 		try:
 			while (True):
