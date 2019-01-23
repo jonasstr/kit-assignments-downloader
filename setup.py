@@ -1,15 +1,14 @@
 from os import path
-from setuptools import setup
+from setuptools import setup, find_packages
 
 here = path.abspath(path.dirname(__file__))
-# Get the long description from the README file.
 with open(path.join(here, 'README.md'), encoding='utf-8') as file:
-	long_description = file.read()
+	read_me = file.read()
 
 setup(name='kita',
 	version='0.1.0',
 	description='An unofficial assignments downloader for the KIT Ilias website.',
-	long_description=long_description,
+	long_description=read_me,
 	long_description_content_type='text/markdown',
 	url='https://github.com/jonasstr/kita',
 	license='MIT',
@@ -24,13 +23,14 @@ setup(name='kita',
 		'Intended Audience :: End Users/Desktop',
 		'Topic :: Utilities'
 	],
-	packages=['kita', 'kita.misc'],	
+	packages= find_packages(),	
 	package_data={
-		'': ['LICENSE', 'config.yml'],
+		'': ['LICENSE', 'config.yml', 'geckodriver.exe'],
 	},
 	include_package_data=True,
 	install_requires=[
-		'click'
+		'click',
+		'colorama',
 		'ruamel.yaml>0.15',
 		'selenium>=3'
 	],

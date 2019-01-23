@@ -14,9 +14,9 @@ from ruamel.yaml import YAML
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 
-import core
-from misc.logger import Logger
-import misc.utils as utils
+from kita import core
+from kita.misc.logger import Logger
+import kita.misc.utils as utils
 
 # Initialize colorama.
 init()
@@ -134,6 +134,7 @@ def confirm(text, default=False):
 	suffix = " (Y/n) [y]: " if default else " (y/N) [n]: "
 	return click.confirm(Fore.CYAN + "> " + text, default=default, show_default=False, prompt_suffix = suffix)
 
+@click.version_option()
 @click.group(context_settings=dict(help_option_names=['-h', '--help']))
 @click.pass_context
 def cli(ctx):

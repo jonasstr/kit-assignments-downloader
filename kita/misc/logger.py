@@ -2,7 +2,7 @@ from logging.handlers import RotatingFileHandler
 from selenium.common.exceptions import TimeoutException
 import logging
 
-import misc.utils as utils
+from kita.misc import utils
 
 class ProgressBar:
 

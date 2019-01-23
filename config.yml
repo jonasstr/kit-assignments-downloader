@@ -2,16 +2,16 @@ courses:
   gbi:
     assignment: {link_format: $$-aufgaben, link_name: Übungsblätter}
     name: Grundbegriffe der Informatik (2018/2019)
-    path:
+    path: Grundbegriffe der Informatik\Übungsblätter
   hm:
     assignment: {file_format: blatt$, link_format: Blatt $}
     link: http://www.math.kit.edu/iana2/edu/hm1info2018w/de
     name: Höhere Mathematik 1
-    path:
+    path: Höhere Mathematik I
   la:
     assignment: {link_format: Blatt$$, link_name: Übungen}
     name: Lineare Algebra 1
-    path:
+    path: E:/KIT/Programmieren/WS18-19
   prg:
     assignment: {link_format: Übungsblatt $/assignment$$, link_name: Übungen}
     name: Programmieren
