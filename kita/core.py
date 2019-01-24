@@ -52,16 +52,11 @@ class Scraper:
     def to_home(self):
         """Opens the ilias home page and logs the user in with the login
             credentials specified in the user.yml file.
-
-
         """
-        with logger.bar("Opening main page.."):
+        with logger.bar("Opening main page and logging in..\n"):
             self.driver.get(self.main_page)
-        
-        with logger.bar("Logging in.."):
             # Click on login button.
-            self.driver.find_element_by_id('f807').click()
-        
+            self.driver.find_element_by_id('f807').click()        
             # Fill in login credentials and login.
             self.driver.find_element_by_id('name').send_keys(self.user_data['user_name'])
             self.driver.find_element_by_id('password').send_keys(self.user_data['password'], Keys.ENTER)
@@ -73,7 +68,6 @@ class Scraper:
         :param name: The link text to return the xpath of.
         :type name: str
         :returns: The xpath to the link specified by the name argument.
-
         """
         return "//a[text()='{}' and @class='il_ContainerItemTitle']".format(name)
 
@@ -84,7 +78,7 @@ class Scraper:
         :param new_tab: Whether to open the link in a new tab. Defaults to False.
         :type new_tab: bool
         :raises TimeoutException: If the link with the given name could not be found
-                after a certain    amount of time.
+                after a certain amount of time.
 
         """
         try:
@@ -288,7 +282,6 @@ class Scraper:
         :param course: 
         :param course_name: 
         """
-
         course_dir = os.path.join(self.dst['root_path'], course['path'])
         result = self.latest_assignment(course_dir)
         rename_format = result[0]
@@ -304,8 +297,8 @@ class Scraper:
                 self.get(course, latest_num + 1, True, rename_format)
                 latest_num += 1
         except (IOError, OSError):
-            raise
+            #raise
             print("Invalid destination path for this assignment!")
         except:
-            raise
+            #raise
             print("Assignment could not be found!")

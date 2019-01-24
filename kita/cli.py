@@ -155,8 +155,8 @@ def cli(ctx):
     bugs/crashes please visit github.com/jonasstr/kita and
     create an issue or contact me via email: uzxhf@student.kit.edu.
     """
-    if ctx.invoked_subcommand is not 'setup':
-        print(ctx.invoked_subcommand)
+    #if ctx.invoked_subcommand is not 'setup':
+    #    print(ctx.invoked_subcommand)
 
 
 @cli.command()
