@@ -8,11 +8,7 @@ An unofficial KIT assignments downloader for [ilias.studium.kit.edu](http://ilia
 Using *kita*, you will not have to care about keeping your assignments up to date **ever again**.  
 *Kita* automatically logs in to your ilias account, downloads the latest assignment of all your classes and moves them to the correct folders in your KIT directory - with just one command.
 
----
-
 *Contents*: **[Requirements](#requirements)** | **[Installation and setup](#installation-and-setup)** | **[Getting started](#getting-started)** | **[Supported courses](#supported-courses)** | **[Adding new courses](#adding-new-courses)**
-
----
 
 ## Requirements
 
@@ -32,26 +28,27 @@ Note: The setup assistant requires you to input your ilias user name and passwor
 
 ## Getting started
 
-After the setup is complete, you can start downloading assignments. Type `-h` or `--help` after a specific command for more information about that command.  
-```
-kita update [OPTIONS] [CLASS_NAMES]...
-```
-**Example:** `kita update la`  
-Scans your 'Lineare Algebra 1' directory as specified during setup. Downloads the latest assignment for this course and renames the files.  
+After the setup is complete, you can start downloading assignments. Type `-h` or `--help` after a specific command for more information about that command. For a list of currently supported courses see [Supported courses](#supported-courses).
 
-**Options:**
-`--all`/`-a` update assignment directories for all your courses.
+Download the latest assignments for all your courses:
+```
+kita update
+```
+---
+You can also update one or more specific courses:
+```
+kita update [COURSE_NAMES]...
+```
+**Example:** `kita update la gbi`  
+Update your 'Lineare Algebra I' and 'Grundbegriffe der Informatik' assignments.
 
-    kita get [OPTIONS] [CLASS_NAMES]... ASSIGNMENT_NUM
-    
-**Example:** `kita get la 9`  
-Downloads the 9th assignment from your course Lineare Algebra 1. You can download assignments from multiple courses at once by separating them by a space, e.g: `kita get la gbi 9`.  
- 
-**Options:**: 
-`--move`/`-mv`: move and rename your downloaded files if you have specified a location in the user.yml file.  
-`--all`/`-a`: Download assignments for all your courses.  
-  ```update```
-  ```move```
+---
+If you only want to download specific assignments you can use:
+```
+kita get [COURSE_NAMES]... ASSIGNMENT_NUM
+```
+**Example:** `kita get la gbi 12`  
+Download the 12th assignments from both 'Lineare Algebra I' and 'Grundbegriffe der Informatik'.
   
  ## Supported courses
  Here is a list of all currently supported courses (from Ilias and external sites):  
