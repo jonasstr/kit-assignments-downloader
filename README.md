@@ -49,7 +49,7 @@ kita get [COURSE_NAMES]... ASSIGNMENT_NUM
 ```
 **Example:** `kita get la gbi 12`  
 Download the assignment #12 from both 'Lineare Algebra I' and 'Grundbegriffe der Informatik'.  
-**Example:** `kita get la gbi [10-12]`  
+**Example:** `kita get la gbi [10-12]` or `kita get la gbi [10,11,12]`  
 Download the assignments #10 to #12.
   
  ## Supported courses
