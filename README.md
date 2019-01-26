@@ -66,3 +66,6 @@ If you can't find a specific ilias course in list above, use the following comma
 kita add
 ``` 
 which will guide you through adding your own courses. Please consider [contributing]() your newly created courses, so that others will be able to download assignments for them as well. 
+
+## License
+[MIT](https://github.com/jonasstr/scripts/blob/master/LICENSE)
