@@ -143,7 +143,7 @@ class Scraper:
         if len(values) == 2:
             path = self.format_assignment_name(values[0], assignment_num)
 
-        with logger.bar("Downloading '{}' from '{}'".format(assignment, course['name']), True):
+        with logger.bar("Downloading '{}' from {}".format(assignment, course['name']), True):
             # Open the course page in a new tab (and switch to it as specified in firefox preferences).
             self.click_link(course['name'], True)
             self.switch_to_last_tab()
@@ -175,13 +175,11 @@ class Scraper:
         :rtype: str
 
         """
-        with logger.bar("Opening page specified by link attribute.."):
-            self.driver.get(course['link'])
-        
+        self.driver.get(course['link'])
         format = course['assignment']['link_format']
         assignment = self.format_assignment_name(format, assignment_num)
 
-        with logger.bar("Downloading '{}' from '{}'".format(assignment, course['name']), True):
+        with logger.bar("Downloading '{}' from {}".format(assignment, course['name']), True):
             self.driver.find_element_by_link_text(assignment).click()
             time.sleep(1)
             return assignment
@@ -225,7 +223,7 @@ class Scraper:
         with logger.bar("Moving assignment to {}".format(dst_folder), True):
             shutil.move(src, dst_file)
 
-    def get(self, course, assignment_num, move, rename_format):
+    def get(self, course, assignment_num, move, rename_format=None):
         """
 
         :param course: 
@@ -289,7 +287,7 @@ class Scraper:
 
         if (latest_num > 0):
             assignment = self.format_assignment_name(rename_format, latest_num)
-            print("Detected latest assignment: {}".format(assignment + ".pdf"))
+            print("Detected latest {} assignment: {}".format(course_name.upper(), assignment + ".pdf"))
         else: print("No assignments found in {} directory, starting at 1.".format(course_name.upper()))
 
         try:
@@ -297,8 +295,6 @@ class Scraper:
                 self.get(course, latest_num + 1, True, rename_format)
                 latest_num += 1
         except (IOError, OSError):
-            #raise
             print("Invalid destination path for this assignment!")
         except:
-            #raise
-            print("Assignment could not be found!")
+            print("Assignment not found!")

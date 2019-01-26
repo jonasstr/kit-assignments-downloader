@@ -19,7 +19,7 @@ yaml = YAML(typ='rt')
 yaml.indent(mapping=2, sequence=4, offset=2)
 yaml.compact(seq_seq=False, seq_map=False)
 
-gecko_path = os.path.join(Path(__file__).parents[0], "geckodriver.exe")
+gecko_path = os.path.join(Path(__file__).parents[1], "geckodriver.exe")
 user_yml_path = os.path.join(click.get_app_dir("kita"), "user.yml")
 config_yml_path = os.path.join(Path(__file__).parents[0], "config.yml")
 user_data = None
@@ -126,18 +126,15 @@ def print_info(ctx, param, value):
 @click.option('--info', '-i', is_flag=True, callback=print_info,
     expose_value=False, help="Show information about the current user and courses and exit.")
 @click.pass_context
-def cli(info, ctx):
+def cli(ctx):
     """Thank you for using the KIT Assignments Downloader!
     
     In order to download assignments make sure the setup was successful
-    (otherwise run 'kita setup' again).
-   
+    (otherwise run 'kita setup' again).\n
     To get started, just use the 'kita update la' command
-    where 'la' is one of your courses.
-   
+    where 'la' is one of your courses.\n
     If you only want to download a specific assignment, use
-    'kita get la 9' where '9' is the assignment number.
-   
+    'kita get la 9' where '9' is the assignment number.\n   
     In case the download isn't working or you encounter any
     bugs/crashes please visit github.com/jonasstr/kita and
     create an issue or contact me via email: uzxhf@student.kit.edu.
@@ -160,7 +157,7 @@ def file_exists(file_name, path):
 @click.option('--config', '-cf', is_flag=True, help="Change the download locations for the courses.")
 @click.option('--user', '-u', is_flag=True, help="Change the current user and the root path for downloads.")
 def setup(config, user):
-    """Starts the command line based setup assistant (sets up user.yml and config.yml, default: both)."""
+    """Start the command line based setup assistant or change previous settings."""
 
     assistant = Assistant(yaml, user_yml_path, config_yml_path, all_courses)
     # Setup user.yml if either the --user option has been provided or no options at all.
@@ -176,24 +173,10 @@ def setup(config, user):
     click.echo("\nSetup successful. Type 'kita --help' for details.")
 
 
-@cli.command()
-@click.argument('type', required=True, type=click.Choice(['config', 'user']))
-def view(type):
-    """
-
-    :param type: 
-
-    """
-    if type == 'config':
-        print("open cfg")
-    elif type == 'user':
-        print("open user")
-
-
 def create_profile():
-    """Creates a Firefox profile required for navigating on a webpage.
+    """Create a Firefox profile required for navigating on a webpage.
     
-    Sets the preferences allowing PDFs to be downloaded immediately as well as
+    Set the preferences allowing PDFs to be downloaded immediately as well as
     navigating between tabs using keyboard shortcuts.
 
     :returns: The Firefox profile.
@@ -219,11 +202,12 @@ def create_profile():
 @cli.command()
 @click.argument('course_names', nargs=-1, required=True, type=click.Choice(all_courses))
 @click.argument('assignment_num')
-@click.option('--move', '-mv', is_flag=True, help="Move the downloaded assignments to the specified directory and rename them.")
+@click.option('--move/--keep', '-mv/-kp', default=True, help="Move the downloaded assignments to their course directory"
+    " (same as 'kita update') or keep them in the browser's download directory (default: move).")
 @click.option('--all', '-a', is_flag=True, help="Download assignments from all specified courses.")
-@click.option('--headless/--visible', '-hl/-v', default=True, help="Start the browser in headless mode (no visible UI).")
+@click.option('--headless/--show', '-hl/-s', default=True, help="Start the browser in headless mode (no visible UI).")
 def get(course_names, assignment_num, move, all, headless):
-    """Starts the 'kita get' command and provides the created scraper object with the entered parameters."""
+    """Download one or more assignments from the specified course(s) and move them into the correct folders."""
 
     if is_positive_int(assignment_num):
         assignments = [assignment_num]
@@ -246,16 +230,9 @@ def get(course_names, assignment_num, move, all, headless):
     courses_to_iterate = all_courses if all else course_names
     
     for name in courses_to_iterate:
-        try:
-            course_ = all_courses[name]
-            for num in assignments:
-                scraper.get(course_, num, move)
-        except (IOError, OSError):
-            print("Invalid destination path for this assignment!")
-        except:
-            raise
-            print("Assignment could not be found!")
-    print("Exiting")
+        course_ = all_courses[name]
+        for num in assignments:
+            scraper.get(course_, num, move)
     driver.quit()
 
 @cli.command()
@@ -263,12 +240,13 @@ def get(course_names, assignment_num, move, all, headless):
 @click.option('--all', '-a', is_flag=True, help="Update assignment directories for all specified courses.")
 @click.option('--headless/--visible', '-hl/-v', default=True,  help="Start the browser in headless mode (no visible UI).")
 def update(course_names, all, headless):
-    """Starts the 'kita update' command and provides the created scraper object with the entered parameters."""
+    """Update one or more courses by downloading the latest assignments."""
     driver = webdriver.Firefox(firefox_profile=create_profile(),
         executable_path=gecko_path,
         options=get_options() if headless else None)
 
     scraper = core.Scraper(driver, user_data, root_path)
+    all = True if not course_names else all
     courses_to_iterate = all_courses if all else course_names
     
     for name in courses_to_iterate:
@@ -280,8 +258,7 @@ def update(course_names, all, headless):
             print("Invalid destination path for this assignment!")
         except:
             raise
-            print("Assignment could not be found!")
-    print("Exiting")
+            print("Assignment not found!")
     driver.quit()    
 
 if __name__ == '__main__':
