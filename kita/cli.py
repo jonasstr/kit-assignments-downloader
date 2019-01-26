@@ -5,13 +5,15 @@ import sys
 import traceback
 
 import click
+from pathlib import Path
 from logging.handlers import RotatingFileHandler
 from ruamel.yaml import YAML
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 
-from kita.assistant import Assistant
 from kita import core
+from kita.assistant import Assistant
+import kita.misc.utils as utils
 
 yaml = YAML(typ='rt')
 yaml.indent(mapping=2, sequence=4, offset=2)
@@ -91,11 +93,40 @@ def is_sequence(value):
     """
     return re.search('^\d+(?:,\d+)*$', value)
 
+def print_info(ctx, param, value):
 
-@click.version_option()
+    if not value or ctx.resilient_parsing:
+        return
+    user_name = 'None'
+    root_path = 'None'
+    if user_data:
+        if 'user_name' in user_data:
+            user_name = user_data['user_name']
+        if 'destination' in user_data:
+            if 'root_path' in user_data['destination']:
+                root_path = utils.reformat(user_data['destination']['root_path'])
+    click.echo("Current user: {}".format(user_name))
+    click.echo("Root path: {}\n".format(root_path))
+    added_courses = []
+    available_courses = 'None'
+    if all_courses:
+        click.echo("Added courses:")
+        for course in all_courses:
+            if 'path' in all_courses[course]:
+                if all_courses[course]['path']:
+                    added_courses.append(course)
+                    print("{}: {}".format(course.upper(), utils.reformat(all_courses[course]['path'])))
+        available_courses = ', '.join(course.upper() for course in all_courses if course not in added_courses)
+    click.echo("\nAvailable courses: {}".format(available_courses))
+    ctx.exit()
+
+
 @click.group(context_settings=dict(help_option_names=['-h', '--help']))
+@click.version_option(message='%(prog)s version %(version)s')
+@click.option('--info', '-i', is_flag=True, callback=print_info,
+    expose_value=False, help="Show information about the current user and courses and exit.")
 @click.pass_context
-def cli(ctx):
+def cli(info, ctx):
     """Thank you for using the KIT Assignments Downloader!
     
     In order to download assignments make sure the setup was successful
@@ -111,8 +142,19 @@ def cli(ctx):
     bugs/crashes please visit github.com/jonasstr/kita and
     create an issue or contact me via email: uzxhf@student.kit.edu.
     """
-    #if ctx.invoked_subcommand is not 'setup':
-    #    print(ctx.invoked_subcommand)
+    if ctx.invoked_subcommand is not 'setup':
+        # Make sure user.py has been created and config.yml exists.
+        if not file_exists("user.yml", user_yml_path) or not file_exists("config.yml", config_yml_path):
+            return
+
+
+def file_exists(file_name, path):
+    if not os.path.isfile(config_yml_path):
+        click.echo("\nKita has not been configured correctly ({} not found)."
+            "\nUse 'kita setup' before downloading assignments.".format(file_name))
+        return False
+    return True
+
 
 @cli.command()
 @click.option('--config', '-cf', is_flag=True, help="Change the download locations for the courses.")

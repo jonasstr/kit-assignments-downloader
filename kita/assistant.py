@@ -119,7 +119,7 @@ class Assistant:
     
     
     def dump_course_path(self, course_key, course_path):
-        """Dumps the specified course path into the config.yml file for a given class.
+        """Dumps the specified course path into the config.yml file for a given course.
     
         :param course_key: The key of the course in the config.yml file e.g. la.
         :type course_key: str
@@ -157,12 +157,12 @@ class Assistant:
             self.show_create_course_folders_dialog(assignment_folders, root_path)
             return
     
-        selected = ', '.join(course_.upper() for course_ in added_courses)
+        selected = ', '.join(course.upper() for course in added_courses)
         choice = ', '.join(key.upper() for key in self.all_courses.keys() if key not in added_courses)
         while choice and not self.confirm("Are these all courses: {}?".format(selected), default=True):
             selection = sself.how_select_folder_manually_dialog(choice)
             added_courses.append(selection[0].lower())
-            selected = ', '.join(course_.upper() for course_ in added_courses)
+            selected = ', '.join(course.upper() for course in added_courses)
             choice = ', '.join(key for key in self.all_courses.keys() if key not in added_courses)
     
             selected_path = selection[1]
