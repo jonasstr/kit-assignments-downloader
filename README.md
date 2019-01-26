@@ -5,7 +5,7 @@ An unofficial KIT assignments downloader for [ilias.studium.kit.edu](http://ilia
 
 ## Why do I need this?
 
-Using kita, you will not have to care about keeping your assignments up to date anymore.  
+With kita, keeping your assignments up to date by hand has become a thing of the past.  
 Kita automatically logs in to your ilias account, downloads the latest assignment of all your classes and moves them to the correct folders in your KIT directory - with just one command.
 
 *Contents*: **[Requirements](#requirements)** | **[Installation and setup](#installation-and-setup)** | **[Getting started](#getting-started)** | **[Supported courses](#supported-courses)** | **[Adding new courses](#adding-new-courses)**
