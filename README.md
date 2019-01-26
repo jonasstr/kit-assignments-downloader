@@ -58,6 +58,9 @@ Download the assignments #10 to #12.
  * HM: Höhere Mathematik 1 ([http://www.math.kit.edu/iana2/edu/hm1info2018w/de](http://www.math.kit.edu/iana2/edu/hm1info2018w/de))
  * LA: Lineare Algebra 1
  * PRG: Programmieren
+ 
+ ## Documentation
+ See full [documentation](https://github.com/jonasstr/scripts/blob/master/docs.md).
   
  ## Adding new courses
  
