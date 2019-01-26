@@ -48,7 +48,9 @@ If you only want to download specific assignments you can use:
 kita get [COURSE_NAMES]... ASSIGNMENT_NUM
 ```
 **Example:** `kita get la gbi 12`  
-Download the 12th assignments from both 'Lineare Algebra I' and 'Grundbegriffe der Informatik'.
+Download the assignment #12 from both 'Lineare Algebra I' and 'Grundbegriffe der Informatik'.  
+**Example:** `kita get la gbi [10-12]`  
+Download the assignments #10 to #12.
   
  ## Supported courses
  Here is a list of all currently supported courses (from Ilias and external sites):  
