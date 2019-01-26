@@ -5,8 +5,8 @@ An unofficial KIT assignments downloader for [ilias.studium.kit.edu](http://ilia
 
 ## Why do I need this?
 
-Using *kita*, you will not have to care about keeping your assignments up to date **ever again**.  
-*Kita* automatically logs in to your ilias account, downloads the latest assignment of all your classes and moves them to the correct folders in your KIT directory - with just one command.
+Using kita, you will not have to care about keeping your assignments up to date anymore.  
+Kita automatically logs in to your ilias account, downloads the latest assignment of all your classes and moves them to the correct folders in your KIT directory - with just one command.
 
 *Contents*: **[Requirements](#requirements)** | **[Installation and setup](#installation-and-setup)** | **[Getting started](#getting-started)** | **[Supported courses](#supported-courses)** | **[Adding new courses](#adding-new-courses)**
 
@@ -64,7 +64,7 @@ Download the assignments #10 to #12.
   
  ## Adding new courses
  
-If you can't find a specific ilias course in list above, use the following command:
+If you can't find a specific course in the list above, use the following command:
 ```
 kita add
 ``` 
