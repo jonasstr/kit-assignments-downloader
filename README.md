@@ -13,7 +13,7 @@ Kita automatically logs in to your ilias account, downloads the latest assignmen
 ## Requirements
 Platform: **Windows**   
 Browser: **Firefox**  
-Support for more operating systems and browsers may be added in the future.
+Support for more operating systems and browsers may be added in the future.  
 Make sure [Python 3](https://www.python.org/downloads/) (including pip and tkinter) is installed on your computer.
 
 ## Installation and setup
