@@ -11,8 +11,10 @@ Kita automatically logs in to your ilias account, downloads the latest assignmen
 *Contents*: **[Requirements](#requirements)** | **[Installation and setup](#installation-and-setup)** | **[Getting started](#getting-started)** | **[Supported courses](#supported-courses)** | **[Adding new courses](#adding-new-courses)**
 
 ## Requirements
-Platform: Windows (Linux support may be added in the future)  
-Make sure [Python 3](https://www.python.org/downloads/) (including pip and tkinter) is installed on your computer. Also note that kita currently only supports the **Firefox** browser.
+Platform: **Windows**   
+Browser: **Firefox**  
+Support for Linux and more browsers may be added in the future.  
+Make sure [Python 3](https://www.python.org/downloads/) (including pip and tkinter) is installed on your computer.
 
 ## Installation and setup
  
