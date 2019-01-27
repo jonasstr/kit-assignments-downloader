@@ -28,7 +28,7 @@ Usage: `kita update [OPTIONS] [COURSE_NAMES]...`
 
 | Option           |  Description                                                                                                                                                                             
 |------------------|--------------------------------------------------------------------------------------------------------------|
-| `-a`, `--all`       | Update assignment directories for all your current courses (default if no courses have been specified).                                             |
+| `-a`, `--all`       | Update assignment directories for all your current courses (default if no `COURSE_NAMES                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             ` have been specified).                                             |
 | `-hl`, `--headless` /  `-sh`, `--show` | Start the browser in headless mode (no visible UI) (default) or open your browser when downloading assignments to view the navigation between sites live.                                                                |
 
 ### Get
@@ -36,10 +36,8 @@ Download one or more assignments from your courses (specified during setup) with
 Usage: `kita get [OPTIONS] [COURSE_NAMES]... ASSIGNMENT_NUM`
 
 `ASSIGNMENT_NUM` can be specified in different ways:  
-* `a` where `a` is a positive integer
-* `a-b` to download assignments starting at `a` up to and including `b`  
-* `a,b,c,..` to download all assignments in the sequence
-
+* a single assignment: `a`
+* multiple: `a-b` (from `a` to and including `b`) or `a,b,c,..` (all in the sequence)
 
 
 
