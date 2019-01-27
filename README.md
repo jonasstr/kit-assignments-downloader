@@ -1,18 +1,18 @@
 # KIT Assignments Downloader
 
-An unofficial KIT assignments downloader for [ilias.studium.kit.edu](http://ilias.studium.kit.edu/).
+An unofficial assignments downloader for [ilias.studium.kit.edu](http://ilias.studium.kit.edu/).
 
 
 ## Why do I need this?
 
-Using kita, keeping your assignments up to date has become a thing of the past.  
+Using kita, keeping your assignments up to date will become a thing of the past.  
 Kita automatically logs in to your ilias account, downloads the latest assignment of all your classes and moves them to the correct folders in your KIT directory - with just one command.
 
 *Contents*: **[Requirements](#requirements)** | **[Installation and setup](#installation-and-setup)** | **[Getting started](#getting-started)** | **[Supported courses](#supported-courses)** | **[Adding new courses](#adding-new-courses)**
 
 ## Requirements
-
-If you are using Windows, make sure [Python 3](https://www.python.org/downloads/) (including pip and tkinter) is installed on your computer. Also note that kita currently only supports the **Firefox** browser.
+Platform: Windows (Linux support may be added in the future)  
+Make sure [Python 3](https://www.python.org/downloads/) (including pip and tkinter) is installed on your computer. Also note that kita currently only supports the **Firefox** browser.
 
 ## Installation and setup
  
@@ -28,7 +28,7 @@ Note: The setup assistant requires you to input your ilias user name and passwor
 
 ## Getting started
 
-After the setup is complete, you can start downloading assignments. Type `-h` or `--help` after a specific command for more information about that command. For a list of currently supported courses see [Supported courses](#supported-courses).
+After the setup is complete, you can start downloading assignments. Type `-h` or `--help` after a specific command for more information about that command. For a list of currently supported courses see [supported courses](#supported-courses).
 
 Download the latest assignments for all your courses:
 ```
@@ -68,7 +68,7 @@ If you can't find a specific course in the list above, use the following command
 ```
 kita add
 ``` 
-which will guide you through adding your own courses. Please consider [contributing]() your newly created courses, so that others will be able to download assignments for them as well. 
+which will guide you through adding your own courses. Please consider [contributing]() your newly created courses so that others will be able to download assignments for them as well. 
 
 ## License
 [MIT](https://github.com/jonasstr/scripts/blob/master/LICENSE)
