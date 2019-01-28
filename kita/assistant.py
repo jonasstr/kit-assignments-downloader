@@ -55,64 +55,6 @@ class Assistant:
         """
         suffix = " (Y/n) [y]: " if default else " (y/N) [n]: "
         return click.confirm(Fore.CYAN + "> " + text, default=default, show_default=False, prompt_suffix=suffix)
-
-
-    def is_similar(self, folder_name, course_name):
-        """Checks whether a given folder name is similar to the full name of a config.yml course
-                or is equal to the course key (e.g. la).
-        
-        "Similar" in this case only refers to the ending of the folder name.
-    
-        :param folder_name: The name of the folder to check.
-        :type folder_name: str
-        :param course_name: The course key or full name to compare the folder name to.
-        :type course_name: str
-        :returns: Whether the folder_name is included in the course_name or vice versa, or whether
-            the only differnce between the strings are the file endings (roman instead of latin digits).
-        """
-        if folder_name.startswith(course_name) or course_name.startswith(folder_name):
-            return True
-        course_suffixes = {'I': 1, 'II': 2, 'III': 3}
-        for suffix in course_suffixes:
-            if folder_name.endswith(suffix):
-                # Check if the folder name is equivalent to the course name apart from the roman suffix.
-                return folder_name.replace(suffix, str(course_suffixes[suffix])) == course_name
-    
-    
-    def show_select_folder_manually_dialog(self, choice):
-        """Prints the setup dialog for adding the location of additional assignments.
-    
-        :param choice: The set of the possible courses to choose from.
-        :returns: The name of the selected course and the path chosen from the folder selection dialog window.
-        :rtype: tuple
-        """
-        course_name = self.prompt("Which courses are missing? Choose from {}".format(choice))
-        while not course_name.lower() in self.dao.config_data.keys():
-            self.echo("Error: invalid input")
-            course_name = self.prompt("Which courses are missing? Choose from {}".format(choice))
-        self.echo("Choose a location for saving your {} courses:".format(course_name.upper()), is_prompt=True)
-        return (course_name, filedialog.askdirectory())
-    
-    
-    def show_create_course_folders_dialog(self, assignment_folders, root_path):
-        """
-    
-        :param assignment_folders: 
-        :param root_path: 
-        """
-        download_dir = os.path.join(root_path, "Downloads")
-        os.makedirs(download_dir, exist_ok=True)
-        
-        for folder in assignment_folders:
-            course_key = folder[0]
-            if course_key in dao.config:
-                course_name = self.dao.config_data[course_key]['name'].replace('/','-').replace('\\','-')
-                course_dir = os.path.join(download_dir, course_name)
-                os.makedirs(course_dir, exist_ok=True)
-                dao.config_data['courses'][course_key]['path'] = course_dir
-                self.dao.dump_config()
-        self.echo("Downloads will be saved to '{}'.".format(utils.reformat(download_dir)))
-    
     
     
     def show_kit_folder_detected_dialog(self, assignment_folders, root_path):    
@@ -133,56 +75,72 @@ class Assistant:
             if self.confirm(message, default=True):
                 self.dao.config_data[course_key]['path'] = detected_path
                 self.dao.dump_config()
+        self.show_confirm_all_courses_dialog()
         
+
+    def show_confirm_all_courses_dialog(self):
         added_courses = self.dao.added_courses()
         if not added_courses:
-            self.show_create_course_folders_dialog(assignment_folders, root_path)
+            self.show_create_course_folder_dialog(assignment_folders, root_path)
             return
+        self.update_selected_courses(added_courses)
+        while self.choice and not self.confirm("Are these all courses: {}?".format(self.selected), default=True):
+            selection = self.show_select_folder_manually_dialog(self.choice)
+            self.show_assignments_save_location_dialog(selection)
+            added_courses.append(selection['course_key'].lower())
+            self.update_selected_courses(added_courses)
+
+
+    def update_selected_courses(self, added_courses):
+        self.selected = ', '.join(course.upper() for course in added_courses)
+        self.choice = ', '.join(key.upper() for key in self.dao.config_data.keys() if key not in added_courses)
+
+
+    def show_assignments_save_location_dialog(self):
+        self.echo("{} assignments will be saved to '{}'.".format(
+            selection['course_key'].upper(), utils.reformat(selection['selected_path'])))
+        self.dao.config_data[selection['course_key']]['path'] = selection['selected_path']
+        self.dao.dump_config()
+
+
+    def show_create_course_folder_dialog(self, assignment_folders, root_path):
+        """
     
-        selected = ', '.join(course.upper() for course in added_courses)
-        choice = ', '.join(key.upper() for key in self.dao.config_data.keys() if key not in added_courses)
-        while choice and not self.confirm("Are these all courses: {}?".format(selected), default=True):
-            selection = sself.how_select_folder_manually_dialog(choice)
-            added_courses.append(selection[0].lower())
-            selected = ', '.join(course.upper() for course in added_courses)
-            choice = ', '.join(key for key in self.dao.config_data.keys() if key not in added_courses)
-    
-            selected_path = selection[1]
-            if selected_path:
-                self.echo("{} assignments will be saved to '{}'.".format(course_key.upper(), utils.reformat(selected_path)))
-                self.dao.config_data[course_key]['path'] = selected_path
+        :param assignment_folders: 
+        :param root_path: 
+        """
+        download_dir = os.path.join(root_path, "Downloads")
+        os.makedirs(download_dir, exist_ok=True)
+        
+        for folder in assignment_folders:
+            course_key = folder[0]
+            if course_key in dao.config:
+                course_name = self.dao.config_data[course_key]['name'].replace('/','-').replace('\\','-')
+                course_dir = os.path.join(download_dir, course_name)
+                os.makedirs(course_dir, exist_ok=True)
+                dao.config_data['courses'][course_key]['path'] = course_dir
                 self.dao.dump_config()
+        self.echo("Downloads will be saved to '{}'.".format(utils.reformat(download_dir)))
+
+
+    def show_select_folder_manually_dialog(self, choice):
+        """Prints the setup dialog for adding the location of additional assignments.
     
-    
-    def find_assignments_folder(self, folder_path, folder_name):
-        """Searches for a possible folder containing the assignments based on the folder name.
-    
-        :param folder_path: The absolute path of the assignment folder to search in.
-        :type folder_path: str
-        :param folder_name: The name of the folder.
-        :type folder_name: str
-        :returns: The course key and the absolute path of the found folder, None if no assignment folder was found.
+        :param choice: The set of the possible courses to choose from.
+        :returns: The name of the selected course and the path chosen from the folder selection dialog window.
         :rtype: tuple
         """
-        for course_ in self.dao.config_data:
-            # Folder has been found.
-            if folder_name.lower() == course_ or self.is_similar(folder_name, self.dao.config_data[course_]['name']):
-                sub_folders = next(os.walk(folder_path))[1]
-                # Search for possible assignment sub-folders.
-                for sub_folder in sub_folders:
-                    name_list = ['übungsblätter', 'blätter', 'assignments']
-                    # Check whether the name of the sub-folder is either one of the above names.
-                    if any(x in sub_folder.lower() for x in name_list):
-                        return (course_, os.path.join(folder_name, sub_folder))
-                return (course_, folder_name)
-        return None
-    
+        course_name = self.prompt("Which courses are missing? Choose from {}".format(choice))
+        while not course_name.lower() in self.dao.config_data.keys():
+            self.echo("Error: invalid input")
+            course_name = self.prompt("Which courses are missing? Choose from {}".format(choice))
+        self.echo("Choose a location for saving your {} courses:".format(course_name.upper()), is_prompt=True)
+        return {'course_key' : course_name, 'selected_path' : filedialog.askdirectory()}
+
     
     def setup_config(self):
         """Starts the setup assistant for setting up the config.yml file."""
-        # Make sure user.yml has been set up.
         if os.path.isfile(self.dao.user_yml_path):
-            # Load user.yml file
             self.dao.load_user()
 
             root_path = self.dao.user_data['destination']['root_path']
@@ -190,19 +148,65 @@ class Assistant:
                 self.echo("\nKita has not been configured correctly (root_path not found).\nUse 'kita setup --user' instead.")
                 return False
     
-            sub_folders = next(os.walk(root_path))[1]            
-            assignment_folders = []
-            for folder in sub_folders:
-                folder_path = os.path.join(root_path, folder)
-                result = self.find_assignments_folder(folder_path, folder)
-                if result:
-                    assignment_folders.append(result)
-        
+            assignment_folders = self.detected_assignment_folders(root_path)
             if assignment_folders:
                 self.show_kit_folder_detected_dialog(assignment_folders, root_path)
             return True
         else: return False
+
+
+    def detected_assignment_folders(self, root_path):
+        sub_folders = next(os.walk(root_path))[1]            
+        assignment_folders = []
+        for folder_name in sub_folders:
+            folder_path = os.path.join(root_path, folder_name)
+            result = self.search_for_assignments_folder(folder_path, folder_name)
+            if result:
+                assignment_folders.append(result)
+        return assignment_folders
+
+
+    def search_for_assignments_folder(self, folder_path, folder_name):
+        """Searches for a possible folder containing the assignments based on the folder name."""
+        for course_key in self.dao.config_data:
+            # Folder has been found.
+            print(str(course_key))
+            if course_key == folder_name.lower() or self.are_similar(folder_name, self.dao.config_data[course_key]['name']):
+                sub_folders = next(os.walk(folder_path))[1]
+                sub_folder_name = self.found_assignments_sub_folder(folder_name, sub_folders)
+                return (course_key, sub_folder_name) if sub_folder_name else (course_key, folder_name)
+
+
+    def found_assignments_sub_folder(self, folder_name, sub_folders):
+        for sub_folder in sub_folders:
+            name_list = ['übungsblätter', 'blätter', 'assignments']
+            # Check whether the name of the sub-folder is either one of the above names.
+            if any(x in sub_folder.lower() for x in name_list):
+                return os.path.join(folder_name, sub_folder)
+
+
+    def are_similar(self, folder_name, course_name):
+        """Checks whether a given folder name is similar to the full name of a config.yml course
+                or is equal to the course key (e.g. la).
+        
+        "Similar" in this case only refers to the ending of the folder name.
+        
+        :param folder_name: The name of the folder to check.
+        :type folder_name: str
+        :param course_name: The course key or full name to compare the folder name to.
+        :type course_name: str
+        :returns: Whether the folder_name is included in the course_name or vice versa, or whether
+            the only differnce between the strings are the file endings (roman instead of latin digits).
+        """
+        if folder_name.startswith(course_name) or course_name.startswith(folder_name):
+            return True
+        course_suffixes = {'I': 1, 'II': 2, 'III': 3}
+        for suffix in course_suffixes:
+            if folder_name.endswith(suffix):
+                # Check if the folder name is equivalent to the course name apart from the roman suffix.
+                return folder_name.replace(suffix, str(course_suffixes[suffix])) == course_name
     
+        
     
     def setup_user(self):
         """Starts the setup assistant for setting up the user.yml file.
@@ -229,6 +233,7 @@ class Assistant:
         data['destination']['root_path'] = root_path
         # Set default rename format.
         data['destination']['rename_format'] = "Blatt$$"
-        self.echo("Downloads will be saved to '{}'.".format(utils.reformat(root_path)))
         self.dao.create_user(data)
+
+        self.echo("Downloads will be saved to '{}'.".format(utils.reformat(root_path)))
         return True 
