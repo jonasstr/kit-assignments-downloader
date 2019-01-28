@@ -12,53 +12,17 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 
 from kita import core
+from kita.dao import Dao
 from kita.assistant import Assistant
 import kita.misc.utils as utils
 
-yaml = YAML(typ='rt')
-yaml.indent(mapping=2, sequence=4, offset=2)
-yaml.compact(seq_seq=False, seq_map=False)
-
-gecko_path = os.path.join(Path(__file__).parents[1], "geckodriver.exe")
+gecko_path = os.path.join(Path(__file__).parents[0], "geckodriver.exe")
 user_yml_path = os.path.join(click.get_app_dir("kita"), "user.yml")
 config_yml_path = os.path.join(Path(__file__).parents[0], "config.yml")
-user_data = None
-root_path = None
-all_courses = None
 
-def try_load_file(path, error_msg):
-    """Tries to load the specified yaml file.
-    If the path is incorrect, reraises the exception and prints the specified error messsage.
-
-    :param path: The absolute of the yaml file to load.
-    :type path: str
-    :param error_msg: The error message to print in case the file could not be loaded.
-    :returns: The content of the file using yaml.load()
-    :rtype: dict
-    """
-    try:
-        with open(path, 'rb') as file:
-            return yaml.load(file)
-    except Exception as e:
-        raise
-        click.echo(error_msg)
-
-
-def load_data():
-    """Loads the user.yml and config.yml files and stores their content in global variables."""
-    global user_data
-    user_data = try_load_file(user_yml_path,
-        error_msg = "Error, cannot find user.yml. \n"
-                "Use 'kita setup' before downloading assignments.")
-    global root_path
-    root_path = user_data['destination']['root_path']
-    global all_courses
-    all_courses = try_load_file(config_yml_path,
-        error_msg = "Error, cannot find config.yml.")['courses']
-
-
-# Load data on startup.
-load_data()
+# Create data access object and load data on startup.
+dao = Dao(gecko_path, user_yml_path, config_yml_path)
+dao.load_data(suppress_access_errors=True)
 
 def get_options():
     """Creates Firefox options for running kita in headless mode."""
@@ -97,28 +61,16 @@ def print_info(ctx, param, value):
 
     if not value or ctx.resilient_parsing:
         return
-    user_name = 'None'
-    root_path = 'None'
-    if user_data:
-        if 'user_name' in user_data:
-            user_name = user_data['user_name']
-        if 'destination' in user_data:
-            if 'root_path' in user_data['destination']:
-                root_path = utils.reformat(user_data['destination']['root_path'])
-    click.echo("Current user: {}".format(user_name))
-    click.echo("Root path: {}\n".format(root_path))
-    added_courses = []
-    available_courses = 'None'
-    if all_courses:
-        click.echo("Added courses:")
-        for course in all_courses:
-            if 'path' in all_courses[course]:
-                if all_courses[course]['path']:
-                    added_courses.append(course)
-                    print("{}: {}".format(course.upper(), utils.reformat(all_courses[course]['path'])))
-        available_courses = ', '.join(course.upper() for course in all_courses if course not in added_courses)
+    
+    click.echo("Current user: {}".format(dao.user_data['user_name']))
+    click.echo("Root path: {}\n".format(dao.user_data['destination']['root_path']))
+    added_courses = dao.added_courses()
+    click.echo("Added courses:")
+    for course in added_courses:
+        click.echo("{}: {}".format(course.upper(), utils.reformat(dao.all_courses[course]['path'])))
+    available_courses = ', '.join(course.upper() for course in dao.all_courses if course not in added_courses)
     click.echo("\nAvailable courses: {}".format(available_courses))
-    ctx.exit()
+    ctx.exit()   
 
 
 @click.group(context_settings=dict(help_option_names=['-h', '--help']))
@@ -159,7 +111,7 @@ def file_exists(file_name, path):
 def setup(config, user):
     """Start the command line based setup assistant or change previous settings."""
 
-    assistant = Assistant(yaml, user_yml_path, config_yml_path, all_courses)
+    assistant = Assistant(yaml, user_yml_path, config_yml_path, dao.all_courses)
     # Setup user.yml if either the --user option has been provided or no options at all.
     if user or user == config:
         if not assistant.setup_user():
@@ -171,6 +123,12 @@ def setup(config, user):
             click.echo("Setup cancelled.")
             return
     click.echo("\nSetup successful. Type 'kita --help' for details.")
+
+
+def add(config):
+    """Add a new course to the list of supported courses."""
+
+    
 
 
 def create_profile():
@@ -200,7 +158,7 @@ def create_profile():
 
 
 @cli.command()
-@click.argument('course_names', nargs=-1, required=True, type=click.Choice(all_courses))
+@click.argument('course_names', nargs=-1, required=True, type=click.Choice(dao.all_courses))
 @click.argument('assignment_num')
 @click.option('--move/--keep', '-mv/-kp', default=True, help="Move the downloaded assignments to their course directory"
     " (same as 'kita update') or keep them in the browser's download directory (default: move).")
@@ -227,16 +185,17 @@ def get(course_names, assignment_num, move, all, headless):
         options=get_options() if headless else None)
 
     scraper = core.Scraper(driver, user_data, root_path)
-    courses_to_iterate = all_courses if all else course_names
+    courses_to_iterate = dao.all_courses if all else course_names
     
     for name in courses_to_iterate:
-        course_ = all_courses[name]
+        course_ = dao.all_courses[name]
         for num in assignments:
             scraper.get(course_, num, move)
     driver.quit()
+    
 
 @cli.command()
-@click.argument('course_names', nargs=-1, required=False, type=click.Choice(all_courses))
+@click.argument('course_names', nargs=-1, required=False, type=click.Choice(dao.all_courses))
 @click.option('--all', '-a', is_flag=True, help="Update assignment directories for all specified courses.")
 @click.option('--headless/--visible', '-hl/-v', default=True,  help="Start the browser in headless mode (no visible UI).")
 def update(course_names, all, headless):
@@ -247,11 +206,11 @@ def update(course_names, all, headless):
 
     scraper = core.Scraper(driver, user_data, root_path)
     all = True if not course_names else all
-    courses_to_iterate = all_courses if all else course_names
+    courses_to_iterate = dao.all_courses if all else course_names
     
     for name in courses_to_iterate:
         try:
-            course_ = all_courses[name]
+            course_ = dao.all_courses[name]
             scraper.update_directory(course_, name)
         except (IOError, OSError):
             raise

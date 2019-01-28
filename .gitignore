@@ -12,4 +12,7 @@ __pycache__/
 *.log
 geckodriver.txt
 
+# Kita user file
 user.yml
+
+todo.txt
