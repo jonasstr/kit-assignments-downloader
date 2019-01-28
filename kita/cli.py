@@ -16,12 +16,16 @@ from kita.dao import Dao
 from kita.assistant import Assistant
 import kita.misc.utils as utils
 
-gecko_path = os.path.join(Path(__file__).parents[0], "geckodriver.exe")
+gecko_path = os.path.join(Path(__file__).parents[1], "geckodriver.exe")
 user_yml_path = os.path.join(click.get_app_dir("kita"), "user.yml")
 config_yml_path = os.path.join(Path(__file__).parents[0], "config.yml")
 
+yaml = YAML(typ='rt')
+yaml.indent(mapping=2, sequence=4, offset=2)
+yaml.compact(seq_seq=False, seq_map=False)
+
 # Create data access object and load data on startup.
-dao = Dao(gecko_path, user_yml_path, config_yml_path)
+dao = Dao(gecko_path, user_yml_path, config_yml_path, yaml)
 dao.load_data(suppress_access_errors=True)
 
 def get_options():
@@ -67,8 +71,8 @@ def print_info(ctx, param, value):
     added_courses = dao.added_courses()
     click.echo("Added courses:")
     for course in added_courses:
-        click.echo("{}: {}".format(course.upper(), utils.reformat(dao.all_courses[course]['path'])))
-    available_courses = ', '.join(course.upper() for course in dao.all_courses if course not in added_courses)
+        click.echo("{}: {}".format(course.upper(), utils.reformat(dao.config_data[course]['path'])))
+    available_courses = ', '.join(course.upper() for course in dao.config_data if course not in added_courses)
     click.echo("\nAvailable courses: {}".format(available_courses))
     ctx.exit()   
 
@@ -111,7 +115,7 @@ def file_exists(file_name, path):
 def setup(config, user):
     """Start the command line based setup assistant or change previous settings."""
 
-    assistant = Assistant(yaml, user_yml_path, config_yml_path, dao.all_courses)
+    assistant = Assistant(yaml, dao)
     # Setup user.yml if either the --user option has been provided or no options at all.
     if user or user == config:
         if not assistant.setup_user():
@@ -142,7 +146,7 @@ def create_profile():
     profile = webdriver.FirefoxProfile()
     # Set download location
     profile.set_preference("browser.download.folderList", 2)
-    profile.set_preference("browser.download.dir", user_data['destination']['root_path'])
+    profile.set_preference("browser.download.dir", dao.user_data['destination']['root_path'])
     # Close download window immediately
     profile.set_preference("browser.download.manager.showWhenStarting", False)
     profile.set_preference("browser.download.manager.closeWhenDone", True)
@@ -157,8 +161,15 @@ def create_profile():
     return profile
 
 
+def create_scraper(headless):
+    driver = webdriver.Firefox(firefox_profile=create_profile(),
+        executable_path=gecko_path,
+        options=get_options() if headless else None)
+    return core.Scraper(driver, dao.user_data, dao.user_data['root_path'])
+
+
 @cli.command()
-@click.argument('course_names', nargs=-1, required=True, type=click.Choice(dao.all_courses))
+@click.argument('course_names', nargs=-1, required=True, type=click.Choice(dao.config_data))
 @click.argument('assignment_num')
 @click.option('--move/--keep', '-mv/-kp', default=True, help="Move the downloaded assignments to their course directory"
     " (same as 'kita update') or keep them in the browser's download directory (default: move).")
@@ -180,31 +191,24 @@ def get(course_names, assignment_num, move, all, headless):
         print("Assignment number must be an integer or in the correct format!")
         return
     
-    driver = webdriver.Firefox(firefox_profile=create_profile(),
-        executable_path=gecko_path,
-        options=get_options() if headless else None)
-
-    scraper = core.Scraper(driver, user_data, root_path)
+    scraper = create_scraper(headless)
     courses_to_iterate = dao.all_courses if all else course_names
     
     for name in courses_to_iterate:
         course_ = dao.all_courses[name]
         for num in assignments:
             scraper.get(course_, num, move)
-    driver.quit()
+    scraper.driver.quit()
     
 
 @cli.command()
-@click.argument('course_names', nargs=-1, required=False, type=click.Choice(dao.all_courses))
+@click.argument('course_names', nargs=-1, required=False, type=click.Choice(dao.config_data))
 @click.option('--all', '-a', is_flag=True, help="Update assignment directories for all specified courses.")
 @click.option('--headless/--visible', '-hl/-v', default=True,  help="Start the browser in headless mode (no visible UI).")
 def update(course_names, all, headless):
     """Update one or more courses by downloading the latest assignments."""
-    driver = webdriver.Firefox(firefox_profile=create_profile(),
-        executable_path=gecko_path,
-        options=get_options() if headless else None)
-
-    scraper = core.Scraper(driver, user_data, root_path)
+    
+    scraper = create_scraper(headless)
     all = True if not course_names else all
     courses_to_iterate = dao.all_courses if all else course_names
     
@@ -218,7 +222,8 @@ def update(course_names, all, headless):
         except:
             raise
             print("Assignment not found!")
-    driver.quit()    
+    scraper.driver.quit()    
+
 
 if __name__ == '__main__':
     cli()

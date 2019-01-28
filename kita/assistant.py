@@ -11,13 +11,11 @@ import kita.misc.utils as utils
 
 class Assistant:
 
-    def __init__(self, yaml, user_yml_path, config_yml_path, all_courses):
+    def __init__(self, yaml, dao):
         # Initialize colorama.
         init()
         self.yaml = yaml
-        self.user_yml_path = user_yml_path
-        self.config_yml_path = config_yml_path
-        self.all_courses = all_courses        
+        self.dao = dao    
         root = tk.Tk() 
         root.withdraw()
         root.wm_attributes("-topmost", True)
@@ -72,7 +70,7 @@ class Assistant:
         :returns: Whether the folder_name is included in the course_name or vice versa, or whether
             the only differnce between the strings are the file endings (roman instead of latin digits).
         """
-        if (folder_name.startswith(course_name) or course_name.startswith(folder_name)):
+        if folder_name.startswith(course_name) or course_name.startswith(folder_name):
             return True
         course_suffixes = {'I': 1, 'II': 2, 'III': 3}
         for suffix in course_suffixes:
@@ -89,7 +87,7 @@ class Assistant:
         :rtype: tuple
         """
         course_name = self.prompt("Which courses are missing? Choose from {}".format(choice))
-        while not course_name.lower() in self.all_courses.keys():
+        while not course_name.lower() in self.dao.config_data.keys():
             self.echo("Error: invalid input")
             course_name = self.prompt("Which courses are missing? Choose from {}".format(choice))
         self.echo("Choose a location for saving your {} courses:".format(course_name.upper()), is_prompt=True)
@@ -104,33 +102,17 @@ class Assistant:
         """
         download_dir = os.path.join(root_path, "Downloads")
         os.makedirs(download_dir, exist_ok=True)
-        with open(config_yml_path, 'rb') as cfg_path:
-            config = self.yaml.load(cfg_path)
+        
         for folder in assignment_folders:
             course_key = folder[0]
-            if course_key in all_courses:
-                course_name = config['courses'][course_key]['name'].replace('/','-').replace('\\','-')
+            if course_key in dao.config:
+                course_name = self.dao.config_data[course_key]['name'].replace('/','-').replace('\\','-')
                 course_dir = os.path.join(download_dir, course_name)
                 os.makedirs(course_dir, exist_ok=True)
-                config['courses'][course_key]['path'] = course_dir
-        with open(self.config_yml_path, 'w', encoding='utf-8') as cfg_path:
-            self.yaml.dump(config, cfg_path)
+                dao.config_data['courses'][course_key]['path'] = course_dir
+                self.dao.dump_config()
         self.echo("Downloads will be saved to '{}'.".format(utils.reformat(download_dir)))
     
-    
-    def dump_course_path(self, course_key, course_path):
-        """Dumps the specified course path into the config.yml file for a given course.
-    
-        :param course_key: The key of the course in the config.yml file e.g. la.
-        :type course_key: str
-        :param course_path: The absolute path of the course directory.
-        :type course_path: str
-        """
-        # Open config.yml in read binary mode.
-        config = self.yaml.load(open(self.config_yml_path, 'rb'))
-        config['courses'][course_key]['path'] = course_path
-        with open(self.config_yml_path, 'w', encoding='utf-8') as cfg_path:
-            self.yaml.dump(config, cfg_path)
     
     
     def show_kit_folder_detected_dialog(self, assignment_folders, root_path):    
@@ -143,32 +125,33 @@ class Assistant:
         """
     
         self.echo("\nPossible KIT folder detected:")
-        added_courses = []
         for folder in assignment_folders:
             course_key = folder[0]
             detected_path = folder[1]
             full_path = os.path.join(root_path, detected_path)
             message = utils.reformat("Save {} assignments to '{}' folder?".format(course_key.upper(), full_path))
             if self.confirm(message, default=True):
-                added_courses.append(course_key)
-                self.dump_course_path(course_key, detected_path)
-    
+                self.dao.config_data[course_key]['path'] = detected_path
+                self.dao.dump_config()
+        
+        added_courses = self.dao.added_courses()
         if not added_courses:
             self.show_create_course_folders_dialog(assignment_folders, root_path)
             return
     
         selected = ', '.join(course.upper() for course in added_courses)
-        choice = ', '.join(key.upper() for key in self.all_courses.keys() if key not in added_courses)
+        choice = ', '.join(key.upper() for key in self.dao.config_data.keys() if key not in added_courses)
         while choice and not self.confirm("Are these all courses: {}?".format(selected), default=True):
             selection = sself.how_select_folder_manually_dialog(choice)
             added_courses.append(selection[0].lower())
             selected = ', '.join(course.upper() for course in added_courses)
-            choice = ', '.join(key for key in self.all_courses.keys() if key not in added_courses)
+            choice = ', '.join(key for key in self.dao.config_data.keys() if key not in added_courses)
     
             selected_path = selection[1]
             if selected_path:
                 self.echo("{} assignments will be saved to '{}'.".format(course_key.upper(), utils.reformat(selected_path)))
-                self.dump_course_path(course_key, selected_path)
+                self.dao.config_data[course_key]['path'] = selected_path
+                self.dao.dump_config()
     
     
     def find_assignments_folder(self, folder_path, folder_name):
@@ -181,9 +164,9 @@ class Assistant:
         :returns: The course key and the absolute path of the found folder, None if no assignment folder was found.
         :rtype: tuple
         """
-        for course_ in self.all_courses:
+        for course_ in self.dao.config_data:
             # Folder has been found.
-            if folder_name.lower() == course_ or self.is_similar(folder_name, self.all_courses[course_]['name']):
+            if folder_name.lower() == course_ or self.is_similar(folder_name, self.dao.config_data[course_]['name']):
                 sub_folders = next(os.walk(folder_path))[1]
                 # Search for possible assignment sub-folders.
                 for sub_folder in sub_folders:
@@ -198,18 +181,11 @@ class Assistant:
     def setup_config(self):
         """Starts the setup assistant for setting up the config.yml file."""
         # Make sure user.yml has been set up.
-        if os.path.isfile(self.user_yml_path):
-            # Open user.yml in read binary mode.
-            with open(self.user_yml_path, 'rb') as cfg:
-                file_size = os.path.getsize(self.user_yml_path)
-                if file_size > 0:
-                    user_data = self.yaml.load(cfg)
-                if file_size > 0 and 'destination' in user_data and 'root_path' in user_data['destination']:
-                    root_path = user_data['destination']['root_path']
-                else: 
-                    self.echo("\nKita has not been configured correctly (empty config file).\nUse 'kita setup --user' instead.")
-                    return False
-    
+        if os.path.isfile(self.dao.user_yml_path):
+            # Load user.yml file
+            self.dao.load_user()
+
+            root_path = self.dao.user_data['destination']['root_path']
             if not os.path.isdir(root_path):
                 self.echo("\nKita has not been configured correctly (root_path not found).\nUse 'kita setup --user' instead.")
                 return False
@@ -234,7 +210,7 @@ class Assistant:
         Saves the login credentials of the user and the root path for downloading assignments.
         """
         # user.yml already exists.
-        if os.path.isfile(self.user_yml_path):
+        if os.path.isfile(self.dao.user_yml_path):
             if not self.confirm("Kita is already set up. Overwrite existing config?"):
                 return False
     
@@ -254,8 +230,5 @@ class Assistant:
         # Set default rename format.
         data['destination']['rename_format'] = "Blatt$$"
         self.echo("Downloads will be saved to '{}'.".format(utils.reformat(root_path)))
-    
-        os.makedirs(os.path.dirname(self.user_yml_path), exist_ok=True)
-        with open(self.user_yml_path, 'w', encoding='utf-8') as user_path:
-            self.yaml.dump(data, user_path)
+        self.dao.create_user(data)
         return True 
