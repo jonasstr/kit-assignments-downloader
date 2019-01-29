@@ -16,7 +16,8 @@ from kita.dao import Dao
 from kita.assistant import Assistant
 import kita.misc.utils as utils
 
-gecko_path = os.path.join(Path(__file__).parents[1], "geckodriver.exe")
+print(__file__)
+gecko_path = os.path.abspath(os.path.join(Path(__file__).parents[1], "geckodriver.exe"))
 user_yml_path = os.path.join(click.get_app_dir("kita"), "user.yml")
 config_yml_path = os.path.join(Path(__file__).parents[0], "config.yml")
 
@@ -165,7 +166,7 @@ def create_scraper(headless):
     driver = webdriver.Firefox(firefox_profile=create_profile(),
         executable_path=gecko_path,
         options=get_options() if headless else None)
-    return core.Scraper(driver, dao.user_data, dao.user_data['root_path'])
+    return core.Scraper(driver, dao.user_data, dao.user_data['destination']['root_path'])
 
 
 @cli.command()
@@ -192,10 +193,10 @@ def get(course_names, assignment_num, move, all, headless):
         return
     
     scraper = create_scraper(headless)
-    courses_to_iterate = dao.all_courses if all else course_names
+    courses_to_iterate = dao.config_data if all else course_names
     
     for name in courses_to_iterate:
-        course_ = dao.all_courses[name]
+        course_ = dao.config_data[name]
         for num in assignments:
             scraper.get(course_, num, move)
     scraper.driver.quit()
@@ -210,11 +211,11 @@ def update(course_names, all, headless):
     
     scraper = create_scraper(headless)
     all = True if not course_names else all
-    courses_to_iterate = dao.all_courses if all else course_names
+    courses_to_iterate = dao.config_data if all else course_names
     
     for name in courses_to_iterate:
         try:
-            course_ = dao.all_courses[name]
+            course_ = dao.config_data[name]
             scraper.update_directory(course_, name)
         except (IOError, OSError):
             raise
