@@ -16,15 +16,14 @@ class UnsafeCommentedMap(CommentedMap):
 class Dao:
 
     def __init__(self, gecko_path, user_yml_path, config_yml_path, yaml):
-        self.gecko_path = os.path.join(Path(__file__).parents[0], "geckodriver.exe")
-        self.user_yml_path = os.path.join(click.get_app_dir("kita"), "user.yml")
-        self.config_yml_path = os.path.join(Path(__file__).parents[0], "config.yml")
+        self.gecko_path = gecko_path
+        self.user_yml_path = user_yml_path
+        self.config_yml_path = config_yml_path
         self.user_data = None
         self.root_path = None
         self.config_data = None
         self.yaml = yaml
         
-
 
     def try_load_file(self, path, error_msg=None):
         """Tries to load the specified yaml file.

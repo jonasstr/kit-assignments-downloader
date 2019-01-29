@@ -1,0 +1,5 @@
+user_name: some username
+password: some password
+destination:
+  root_path: E:\KIT\Sonstiges\WS18-19
+  rename_format: Blatt$$
