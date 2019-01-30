@@ -29,13 +29,11 @@ class Scraper:
     :type dst: dict
 
     """
-    def __init__(self, driver, user_data, download_path):
+    def __init__(self, driver, dao):
         self.driver = driver
         self.wait = WebDriverWait(self.driver, 10)
         self.main_page = "https://ilias.studium.kit.edu/login.php"
-        self.user_data = user_data
-        self.download_path = download_path
-        self.dst = user_data['destination']
+        self.dao = dao
 
     def on_any_page(self):
         """
@@ -58,8 +56,8 @@ class Scraper:
             # Click on login button.
             self.driver.find_element_by_id('f807').click()        
             # Fill in login credentials and login.
-            self.driver.find_element_by_id('name').send_keys(self.user_data['user_name'])
-            self.driver.find_element_by_id('password').send_keys(self.user_data['password'], Keys.ENTER)
+            self.driver.find_element_by_id('name').send_keys(self.dao.user_data['user_name'])
+            self.driver.find_element_by_id('password').send_keys(self.dao.user_data['password'], Keys.ENTER)
 
     def path_of(self, name):
         """Retrieves the xpath of the link with the specified name on the current webpage.
@@ -210,14 +208,14 @@ class Scraper:
 
         """
         if not rename_format:
-        	rename_format = self.dst['rename_format']
+        	rename_format = self.dao.user_data['destination']['rename_format']
         file_name = assignment
         asgmt = course['assignment']
         if 'file_format' in asgmt:
             file_name = self.format_assignment_name(asgmt['file_format'], assignment_num)
 
-        src = os.path.join(self.download_path, file_name + ".pdf")    
-        dst_folder = os.path.join(self.dst['root_path'], course['path'])
+        src = os.path.join(self.dao.user_data['destination']['root_path'], file_name + ".pdf")    
+        dst_folder = os.path.join(self.dao.user_data['destination']['root_path'], course['path'])
         dst_file = os.path.join(dst_folder, self.format_assignment_name(rename_format, assignment_num) + ".pdf")
 
         with logger.bar("Moving assignment to {}".format(dst_folder), True):
@@ -238,7 +236,7 @@ class Scraper:
             assignment = self.download(course, assignment_num)
         if move:
             if not rename_format:
-                rename_format = self.dst['rename_format']               	                
+                rename_format = self.dao['destination']['rename_format']               	                
             self.move_and_rename(assignment, course, assignment_num, rename_format)
 
 
@@ -252,7 +250,7 @@ class Scraper:
         """
         assignment_files = next(os.walk(course_dir))[2]
         detected_format = self.detect_assignment_format(assignment_files)
-        rename_format = detected_format if detected_format else self.dst['rename_format']
+        rename_format = detected_format if detected_format else self.dao.user_data['destination']['rename_format']
 
         current_assignment = 1
         latest_assignment = None
@@ -282,7 +280,7 @@ class Scraper:
         :param course: 
         :param course_name: 
         """
-        course_dir = os.path.join(self.dst['root_path'], course['path'])
+        course_dir = os.path.join(self.dao.user_data['destination']['root_path'], course['path'])
         result = self.latest_assignment(course_dir)
         rename_format = result[0]
         latest_num = result[1]

@@ -1,38 +1,15 @@
 import os
-from pathlib import Path
-from ruamel.yaml import YAML
-import unittest
-import shutil
 
 from kita.assistant import Assistant
-from kita.dao import Dao
+from tests.base import BaseUnitTest
 
-def create_dao(yaml):
-    gecko_path = os.path.join(Path(__file__).parents[1], "geckodriver.exe")
-    dao = Dao(gecko_path, "data/mock_user.yml", "data/mock_config.yml", yaml)
-    return dao
 
-def create_yaml():
-    yaml = YAML(typ='rt')
-    yaml.indent(mapping=2, sequence=4, offset=2)
-    yaml.compact(seq_seq=False, seq_map=False)
-    return yaml
-
-def delete_temp_folders():
-    shutil.rmtree(os.path.join(os.path.dirname(__file__), "Downloads"), ignore_errors=True)
-
-class TestAssistant(unittest.TestCase):
+class TestAssistant(BaseUnitTest):
 
     @classmethod
     def setUpClass(cls):
-        cls.yaml = create_yaml()
-        cls.dao = create_dao(cls.yaml)
-        cls.dao.load_data()
+        super().setUpClass()
         cls.assistant = Assistant(cls.yaml, cls.dao)
-        delete_temp_folders()
-
-    def tearDown(self):
-        delete_temp_folders()
 
     def test_same_folder_name_and_course_name_should_be_detected(self):
         folder_name = "Lineare Algebra 1"

@@ -8,10 +8,10 @@ from ruamel.yaml.comments import CommentedMap
 
 class UnsafeCommentedMap(CommentedMap):        
 
-        def __getitem__(self, key):
-            if key in self:
-                return CommentedMap.__getitem__(self, key)
-            else: click.echo("Key {} not found!".format(key))
+    def __getitem__(self, key):
+        if key in self:
+            return CommentedMap.__getitem__(self, key)
+        else: click.echo("Key {} not found!".format(key))
 
 class Dao:
 
