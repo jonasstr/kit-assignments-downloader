@@ -89,6 +89,7 @@ class Scraper:
         except:
             raise
 
+
     def switch_to_last_tab(self):
         """Switches to the current last tab in Firefox."""
         # Wait until the site has loaded.
@@ -98,21 +99,7 @@ class Scraper:
         # Switch to the new tab.
         self.driver.switch_to.window(self.driver.window_handles[-1])
 
-    def format_assignment_name(self, name, assignment_num):
-        """Formats the specified assignment name by replacing all $-signs with the assignment
-        number.
-        Appends leading zeroes if the amount of consecutive $-signs is higher than
-        the assignment number.
-
-        :param name: The name of the assignment to format. All $-signs will be replaced
-                by the assignment number and leading zeroes if necessary.
-        :param assignment_num: The number of the assignment to replace the $-signs.
-        :type assignment_num: int
-
-        """
-        num_digits = name.count('$')
-        return name.replace('$' * num_digits, str(assignment_num).zfill(num_digits))
-
+    
     def download(self, course, assignment_num):
         """Downloads the specified assignment of the given class from ilias.
         
@@ -158,6 +145,23 @@ class Scraper:
             self.driver.switch_to.window(self.driver.window_handles[0])
             return assignment
 
+
+    def format_assignment_name(self, name, assignment_num):
+        """Formats the specified assignment name by replacing all $-signs with the assignment
+        number.
+        Appends leading zeroes if the amount of consecutive $-signs is higher than
+        the assignment number.
+
+        :param name: The name of the assignment to format. All $-signs will be replaced
+                by the assignment number and leading zeroes if necessary.
+        :param assignment_num: The number of the assignment to replace the $-signs.
+        :type assignment_num: int
+
+        """
+        num_digits = name.count('$')
+        return name.replace('$' * num_digits, str(assignment_num).zfill(num_digits))
+
+
     def download_from(self, course, assignment_num):
         """Provides the ability to download an assignment from a different source than ilias.
         
@@ -181,6 +185,7 @@ class Scraper:
             self.driver.find_element_by_link_text(assignment).click()
             time.sleep(1)
             return assignment
+
 
     def move_and_rename(self, assignment, course, assignment_num, rename_format):
         """Moves and renames a downloaded assignment PDF to the specified destination folder.
@@ -210,9 +215,8 @@ class Scraper:
         if not rename_format:
         	rename_format = self.dao.user_data['destination']['rename_format']
         file_name = assignment
-        asgmt = course['assignment']
-        if 'file_format' in asgmt:
-            file_name = self.format_assignment_name(asgmt['file_format'], assignment_num)
+        if 'file_format' in course['assignment']:
+            file_name = self.format_assignment_name(course['assignment']['file_format'], assignment_num)
 
         src = os.path.join(self.dao.user_data['destination']['root_path'], file_name + ".pdf")    
         dst_folder = os.path.join(self.dao.user_data['destination']['root_path'], course['path'])
@@ -220,6 +224,7 @@ class Scraper:
 
         with logger.bar("Moving assignment to {}".format(dst_folder), True):
             shutil.move(src, dst_file)
+
 
     def get(self, course, assignment_num, move, rename_format=None):
         """
@@ -240,7 +245,32 @@ class Scraper:
             self.move_and_rename(assignment, course, assignment_num, rename_format)
 
 
-    def latest_assignment(self, course_dir):
+    def update_directory(self, course, course_name):
+        """
+
+        :param course: 
+        :param course_name: 
+        """
+        course_dir = os.path.join(self.dao.user_data['destination']['root_path'], course['path'])
+        rename_format = self.find_rename_format(course_dir)
+        latest_assignment = self.latest_assignment(course_dir, rename_format)
+
+        if (latest_assignment > 0):
+            assignment = self.format_assignment_name(rename_format, latest_assignment)
+            print("Detected latest {} assignment: {}".format(course_name.upper(), assignment + ".pdf"))
+        else: print("No assignments found in {} directory, starting at 1.".format(course_name.upper()))
+
+        try:
+            while (True):
+                self.get(course, latest_assignment + 1, True, rename_format)
+                latest_assignment += 1
+        except (IOError, OSError):
+            print("Invalid destination path for this assignment!")
+        except:
+            print("Assignment not found!")
+
+
+    def latest_assignment(self, course_dir, rename_format):
         """Finds the currently latest assignment in a given user directory.
 
         :param course_dir: The absolute path to the course directory to search in.
@@ -248,22 +278,23 @@ class Scraper:
         :returns: The latest assignment number, zero if no file matched the rename_format.
         :rtype: int
         """
-        assignment_files = next(os.walk(course_dir))[2]
-        detected_format = self.detect_assignment_format(assignment_files)
-        rename_format = detected_format if detected_format else self.dao.user_data['destination']['rename_format']
-
         current_assignment = 1
         latest_assignment = None
-        while latest_assignment == None:
-            assignment_path = os.path.join(course_dir, self.format_assignment_name(rename_format + ".pdf", current_assignment))
-            # Search for the current assignment PDF.
-            if not os.path.isfile(assignment_path):
+        while latest_assignment is None:
+            assignment_file_path = os.path.join(course_dir, self.format_assignment_name(rename_format + ".pdf", current_assignment))
+            if not os.path.isfile(assignment_file_path):
                 latest_assignment = current_assignment - 1
             else: current_assignment += 1
-        return (rename_format, latest_assignment)
+        return latest_assignment
 
 
-    def detect_assignment_format(self, assignment_files):
+    def find_rename_format(self, course_dir):
+        assignment_files = next(os.walk(course_dir))[2]
+        detected_format = self.detect_format(assignment_files)
+        return detected_format if detected_format else self.dao.user_data['destination']['rename_format']
+
+
+    def detect_format(self, assignment_files):
         
         for assignment in assignment_files:
             # Remove the .pdf file extension.
@@ -273,28 +304,3 @@ class Scraper:
             if num_digits > 0:
                 return re.sub(r'\d+$', '$' * num_digits, assignment)
 
-
-    def update_directory(self, course, course_name):
-        """
-
-        :param course: 
-        :param course_name: 
-        """
-        course_dir = os.path.join(self.dao.user_data['destination']['root_path'], course['path'])
-        result = self.latest_assignment(course_dir)
-        rename_format = result[0]
-        latest_num = result[1]
-
-        if (latest_num > 0):
-            assignment = self.format_assignment_name(rename_format, latest_num)
-            print("Detected latest {} assignment: {}".format(course_name.upper(), assignment + ".pdf"))
-        else: print("No assignments found in {} directory, starting at 1.".format(course_name.upper()))
-
-        try:
-            while (True):
-                self.get(course, latest_num + 1, True, rename_format)
-                latest_num += 1
-        except (IOError, OSError):
-            print("Invalid destination path for this assignment!")
-        except:
-            print("Assignment not found!")

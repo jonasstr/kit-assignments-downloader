@@ -164,7 +164,7 @@ def create_scraper(headless):
     driver = webdriver.Firefox(firefox_profile=create_profile(),
         executable_path=gecko_path,
         options=get_options() if headless else None)
-    return core.Scraper(driver, dao.user_data, dao.user_data['destination']['root_path'])
+    return core.Scraper(driver, dao)
 
 
 @cli.command()
