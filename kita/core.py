@@ -242,17 +242,6 @@ class Scraper:
             self.move_and_rename(assignment, course, assignment_num, rename_format)
 
 
-    def detect_assignment_format(self, course_dir):
-        assignments = next(os.walk(course_dir))[2]
-        for assignment in assignments:
-            # Remove the .pdf file extension.
-            assignment = assignment[:-4]
-            # If the file name ends with at least one digit replace them with $-signs to get the format.
-            num_digits =  sum(char.isdigit() for char in assignment)
-            if num_digits > 0:
-                return re.sub(r'\d+$', '$' * num_digits, assignment)                
-
-
     def latest_assignment(self, course_dir):
         """Finds the currently latest assignment in a given user directory.
 
@@ -261,7 +250,8 @@ class Scraper:
         :returns: The latest assignment number, zero if no file matched the rename_format.
         :rtype: int
         """
-        detected_format = self.detect_assignment_format(course_dir)
+        assignment_files = next(os.walk(course_dir))[2]
+        detected_format = self.detect_assignment_format(assignment_files)
         rename_format = detected_format if detected_format else self.dst['rename_format']
 
         current_assignment = 1
@@ -273,6 +263,18 @@ class Scraper:
                 latest_assignment = current_assignment - 1
             else: current_assignment += 1
         return (rename_format, latest_assignment)
+
+
+    def detect_assignment_format(self, assignment_files):
+        
+        for assignment in assignment_files:
+            # Remove the .pdf file extension.
+            assignment = assignment[:-4]
+            # If the file name ends with at least one digit replace them with $-signs to get the format.
+            num_digits =  sum(char.isdigit() for char in assignment)
+            if num_digits > 0:
+                return re.sub(r'\d+$', '$' * num_digits, assignment)
+
 
     def update_directory(self, course, course_name):
         """

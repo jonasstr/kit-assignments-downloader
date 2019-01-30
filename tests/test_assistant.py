@@ -19,7 +19,7 @@ def create_yaml():
     return yaml
 
 def delete_temp_folders():
-    pass#shutil.rmtree(os.path.join(os.path.dirname(__file__), "Downloads"), ignore_errors=True)
+    shutil.rmtree(os.path.join(os.path.dirname(__file__), "Downloads"), ignore_errors=True)
 
 class TestAssistant(unittest.TestCase):
 
@@ -85,11 +85,30 @@ class TestAssistant(unittest.TestCase):
         expected_result = {'course_key' : 'hm', 'folder_name' : 'Höhere Mathematik 1\\Übungsblätter'}
         self.assertEqual(self.assistant.search_for_assignments_folder(course_folder, sub_folders), expected_result)
 
-    def test_create_download_folder(self):
+    def test_create_empty_download_folder(self):
         assignment_folders = ["Course A", "Course B", "Course C"]
         root_path = os.path.dirname(__file__)
         expected_folder = os.path.join(root_path, "Downloads")
         self.assistant.create_download_folder(assignment_folders, root_path)
         self.assertTrue(os.path.exists(expected_folder))
 
-    
+    def test_create_download_folder_should_create_course_subfolders(self):
+        assignment_folders = ["la", "hm"]
+        root_path = os.path.dirname(__file__)
+        self.assistant.create_download_folder(assignment_folders, root_path)
+        expected_la_folder = os.path.join(root_path, "Downloads", self.full_course_name('la'))
+        expected_hm_folder = os.path.join(root_path, "Downloads", self.full_course_name('hm'))
+        self.assertTrue(os.path.exists(expected_la_folder))
+        self.assertTrue(os.path.exists(expected_hm_folder))
+
+    def test_create_download_folder_should_create_course_subfolders_slash_in_course_name(self):
+        assignment_folders = ["gbi"]
+        root_path = os.path.dirname(__file__)
+        self.assistant.create_download_folder(assignment_folders, root_path)
+        expected_course_name = self.full_course_name('gbi').replace('/', '-')
+        expected_gbi_folder = os.path.join(root_path, "Downloads", expected_course_name)
+        self.assertTrue(os.path.exists(expected_gbi_folder))
+
+    def full_course_name(self, course_key):
+        return self.dao.config_data[course_key]['name']
+

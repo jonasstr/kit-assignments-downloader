@@ -65,7 +65,7 @@ class Assistant:
         data['destination']['rename_format'] = "Blatt$$"
         self.dao.create_user(data)
 
-        self.echo("Downloads will be saved to '{}'.".format(utils.reformat(root_path)))
+        self.echo("Saved root folder '{}'.".format(utils.reformat(root_path)))
         return True 
 
 
@@ -80,11 +80,11 @@ class Assistant:
                 return False
     
             assignment_folders = self.detected_assignment_folders(root_path)
+            added_courses = []
             if assignment_folders:
-                self.show_kit_folder_detected_dialog(assignment_folders, root_path)
-            self.show_confirm_all_courses_dialog((course for course in self.dao.config_data), [], root_path)
+                added_courses = self.show_kit_folder_detected_dialog(assignment_folders, root_path)
+            self.show_confirm_all_courses_dialog((course for course in self.dao.config_data), added_courses, root_path)
             return True
-        else: return False
     
     
     def show_kit_folder_detected_dialog(self, assignment_folders, root_path):    
@@ -92,18 +92,20 @@ class Assistant:
         self.echo("\nPossible KIT folder detected:")
         added_courses = []
         for selection in assignment_folders:
-            print(str(selection))
             full_path = os.path.join(root_path, selection['folder_name'])
-            message = utils.reformat("Save {} assignments to '{}' folder?".format(selection['course_key'].upper(), full_path))
+            message = utils.reformat("Save {} assignments to '{}'?".format(selection['course_key'].upper(), full_path))
             if self.confirm(message, default=True):
                 added_courses.append(selection['course_key'])
                 self.dao.config_data[selection['course_key']]['path'] = selection['folder_name']
                 self.dao.dump_config()
+        return added_courses
         
 
     def show_confirm_all_courses_dialog(self, assignment_folders, added_courses, root_path):
         if not added_courses:
-            self.create_download_folder(assignment_folders, root_path)
+            download_dir = self.create_download_folder(assignment_folders, root_path)
+            click.echo("Assignments will be saved to '{}'".format(download_dir))
+            return
         self.update_selected_courses(added_courses)
         while self.choice and not self.confirm("Are these all courses: {}?".format(self.selected), default=True):
             selection = self.show_select_folder_manually_dialog(self.choice, "Which courses are missing?")
@@ -125,35 +127,29 @@ class Assistant:
 
 
     def show_select_folder_manually_dialog(self, choice, prompt_msg):
-        """Shows the setup dialog for adding the location of additional assignments.
-    
-        :returns: The name of the selected course and the path chosen from the folder selection dialog window.
-        :rtype: tuple
-        """
-        course_name = self.prompt("{} Choose from {}".format(prompt_msg, choice))
-        while not course_name.lower() in self.dao.config_data.keys():
+        """Shows the setup dialog for adding the location of additional assignments."""
+        course_key = self.prompt("{} Choose from {}".format(prompt_msg, choice))
+        while not course_key.lower() in self.dao.config_data.keys():
             self.echo("Error: invalid input")
-            course_name = self.prompt("{} Choose from {}".format(prompt_msg, choice))
-        self.echo("Choose a location for saving your {} courses:".format(course_name.upper()), is_prompt=True)
-        return {'course_key' : course_name, 'selected_path' : filedialog.askdirectory()}
+            course_key = self.prompt("{} Choose from {}".format(prompt_msg, choice))
+        self.echo("Choose a location for saving your {} courses:".format(course_key.upper()), is_prompt=True)
+        return {'course_key' : course_key, 'selected_path' : filedialog.askdirectory()}
 
 
-    def create_download_folder(self, assignment_folders, root_path):
+    def create_download_folder(self, course_keys, root_path):
         """
-    
-        :param assignment_folders: 
+        :param course_keys: 
         :param root_path: 
         """
         download_dir = os.path.join(root_path, "Downloads")
         os.makedirs(download_dir, exist_ok=True)
         
-        for folder in assignment_folders:
-            course_key = folder[0]
-            if course_key in self.dao.config_data:
-                course_name = self.dao.config_data[course_key]['name'].replace('/','-').replace('\\','-')
-                course_dir = os.path.join(download_dir, course_name)
+        for key in course_keys:
+            if key in self.dao.config_data:
+                new_key = self.dao.config_data[key]['name'].replace('/','-').replace('\\','-')
+                course_dir = os.path.join(download_dir, new_key)
                 os.makedirs(course_dir, exist_ok=True)
-                self.dao.config_data['courses'][course_key]['path'] = course_dir
+                self.dao.config_data[key]['path'] = course_dir
                 self.dao.dump_config()
         return download_dir
 

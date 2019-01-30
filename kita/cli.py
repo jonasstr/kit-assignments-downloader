@@ -16,8 +16,8 @@ from kita.dao import Dao
 from kita.assistant import Assistant
 import kita.misc.utils as utils
 
-print(__file__)
-gecko_path = os.path.abspath(os.path.join(Path(__file__).parents[1], "geckodriver.exe"))
+print(os.path.join(Path(__file__).resolve().parents[1], "geckodriver"))
+gecko_path = os.path.join(Path(__file__).resolve().parents[1], "geckodriver")
 user_yml_path = os.path.join(click.get_app_dir("kita"), "user.yml")
 config_yml_path = os.path.join(Path(__file__).parents[0], "config.yml")
 
@@ -96,19 +96,17 @@ def cli(ctx):
     bugs/crashes please visit github.com/jonasstr/kita and
     create an issue or contact me via email: uzxhf@student.kit.edu.
     """
-    if ctx.invoked_subcommand is not 'setup':
+    if str(ctx.invoked_subcommand) is not 'setup':
         # Make sure user.py has been created and config.yml exists.
-        if not file_exists("user.yml", user_yml_path) or not file_exists("config.yml", config_yml_path):
-            return
+        if setup_incorrectly("user.yml", user_yml_path) or setup_incorrectly("config.yml", config_yml_path):
+            sys.exit(1)
 
 
-def file_exists(file_name, path):
-    if not os.path.isfile(config_yml_path):
+def setup_incorrectly(file_name, path):
+    if not os.path.isfile(path):
         click.echo("\nKita has not been configured correctly ({} not found)."
             "\nUse 'kita setup' before downloading assignments.".format(file_name))
-        return False
-    return True
-
+        return True
 
 @cli.command()
 @click.option('--config', '-cf', is_flag=True, help="Change the download locations for the courses.")

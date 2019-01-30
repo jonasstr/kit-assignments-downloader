@@ -10,8 +10,8 @@ hm:
 la:
   assignment: {link_format: Blatt$$, link_name: Übungen}
   name: Lineare Algebra 1
-  path: Lineare Algebra I
+  path: E:/KIT/Sonstiges/WS18-19/Lineare Algebra I
 prg:
   assignment: {link_format: Übungsblatt $/assignment$$, link_name: Übungen}
   name: Programmieren
-  path: E:/KIT/Sonstiges/WS18-19/Downloads
+  path: E:/KIT/Sonstiges/WS18-19/Lineare Algebra I
