@@ -27,6 +27,7 @@ class BaseUnitTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.root_path = os.path.dirname(__file__)
         cls.yaml = create_yaml()
         cls.dao = create_dao(cls.yaml)
         cls.dao.load_data()

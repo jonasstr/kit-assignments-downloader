@@ -1,7 +1,7 @@
 gbi:
   assignment: {link_format: $$-aufgaben, link_name: Übungsblätter}
   name: Grundbegriffe der Informatik (2018/2019)
-  path: Grundbegriffe der Informatik
+  path: Grundbegriffe der Informatik\Übungsblätter
 hm:
   assignment: {file_format: blatt$, link_format: Blatt $}
   link: http://www.math.kit.edu/iana2/edu/hm1info2018w/de
@@ -10,7 +10,7 @@ hm:
 la:
   assignment: {link_format: Blatt$$, link_name: Übungen}
   name: Lineare Algebra 1
-  path: E:/KIT/Sonstiges/WS18-19/Lineare Algebra I
+  path: Lineare Algebra I\Übungsblätter
 prg:
   assignment: {link_format: Übungsblatt $/assignment$$, link_name: Übungen}
   name: Programmieren

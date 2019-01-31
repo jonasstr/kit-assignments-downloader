@@ -143,7 +143,6 @@ class Assistant:
         """
         download_dir = os.path.join(root_path, "Downloads")
         os.makedirs(download_dir, exist_ok=True)
-        
         for key in course_keys:
             if key in self.dao.config_data:
                 new_key = self.dao.config_data[key]['name'].replace('/','-').replace('\\','-')
@@ -158,28 +157,29 @@ class Assistant:
         course_folders = next(os.walk(root_path))[1]            
         assignment_folders = []
         for folder_name in course_folders:
-            result = self.search_for_assignments_folder(folder_name, course_folders)
+            sub_folders = next(os.walk(os.path.join(root_path, folder_name)))[1]  
+            result = self.search_for_assignments_folder(folder_name, sub_folders)
             if result:
                 assignment_folders.append(result)
         return assignment_folders
 
 
-    def search_for_assignments_folder(self, folder_name, course_folders):
+    def search_for_assignments_folder(self, folder_name, sub_folders):
         """Searches for a possible folder containing the assignments based on the folder name."""
         for course_key in self.dao.config_data:
             # Folder has been found.
             if course_key == folder_name.lower() or self.are_similar(folder_name, course_key, self.dao.config_data[course_key]['name']):
-                sub_folder_name = self.found_assignments_sub_folder(folder_name, course_folders)
+                sub_folder_name = self.found_assignments_sub_folder(folder_name, sub_folders)
                 return ({'course_key' : course_key, 'folder_name' : sub_folder_name} if sub_folder_name else
                     {'course_key' : course_key, 'folder_name' : folder_name})
 
 
-    def found_assignments_sub_folder(self, folder_name, sub_folders):
+    def found_assignments_sub_folder(self, course_folder_name, sub_folders):
         for sub_folder in sub_folders:
             name_list = ['assignments', 'blätter', 'übungen', 'übungsblätter']
             # Check whether the name of the sub-folder is either one of the above names.
             if any(x in sub_folder.lower() for x in name_list):
-                return os.path.join(folder_name, sub_folder)
+                return os.path.join(course_folder_name, sub_folder)
 
 
     def are_similar(self, folder_name, course_key, course_name):

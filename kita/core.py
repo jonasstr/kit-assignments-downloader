@@ -272,7 +272,7 @@ class Scraper:
 
 
     def latest_assignment(self, assignment_files, rename_format):
-        """Finds the currently latest assignment in a given user directory."""
+        """Finds the latest assignment in a list of assignment PDFs."""
         current_assignment = 0
         for assignment in assignment_files:
             diff = [asgmt_char for i,(asgmt_char,frmt_char)
@@ -282,7 +282,6 @@ class Scraper:
                 current_assignment = num
         return current_assignment
 
-
     def assignment_num_from_diff(self, diff):
         result = diff.replace('-', '').strip()
         if result.startswith('0'):
@@ -290,11 +289,9 @@ class Scraper:
         if re.search('^\d+$', result):
             return int(result)
 
-
     def find_rename_format(self, assignment_files):
         detected_format = self.detect_format(assignment_files)
         return detected_format if detected_format else self.dao.user_data['destination']['rename_format']
-
 
     def detect_format(self, assignment_files):
         
