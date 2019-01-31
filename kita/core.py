@@ -252,8 +252,9 @@ class Scraper:
         :param course_name: 
         """
         course_dir = os.path.join(self.dao.user_data['destination']['root_path'], course['path'])
-        rename_format = self.find_rename_format(course_dir)
-        latest_assignment = self.latest_assignment(course_dir, rename_format)
+        assignment_files = next(os.walk(course_dir))[2]
+        rename_format = self.find_rename_format(assignment_files)
+        latest_assignment = self.latest_assignment(assignment_files, rename_format)
 
         if (latest_assignment > 0):
             assignment = self.format_assignment_name(rename_format, latest_assignment)
@@ -270,26 +271,27 @@ class Scraper:
             print("Assignment not found!")
 
 
-    def latest_assignment(self, course_dir, rename_format):
-        """Finds the currently latest assignment in a given user directory.
-
-        :param course_dir: The absolute path to the course directory to search in.
-        :type course_dir: dict
-        :returns: The latest assignment number, zero if no file matched the rename_format.
-        :rtype: int
-        """
-        current_assignment = 1
-        latest_assignment = None
-        while latest_assignment is None:
-            assignment_file_path = os.path.join(course_dir, self.format_assignment_name(rename_format + ".pdf", current_assignment))
-            if not os.path.isfile(assignment_file_path):
-                latest_assignment = current_assignment - 1
-            else: current_assignment += 1
-        return latest_assignment
+    def latest_assignment(self, assignment_files, rename_format):
+        """Finds the currently latest assignment in a given user directory."""
+        current_assignment = 0
+        for assignment in assignment_files:
+            diff = [asgmt_char for i,(asgmt_char,frmt_char)
+                in enumerate(zip(self.remove_extension(assignment), rename_format)) if asgmt_char != frmt_char]
+            num = self.assignment_num_from_diff(''.join(diff))
+            if num and num > current_assignment:
+                current_assignment = num
+        return current_assignment
 
 
-    def find_rename_format(self, course_dir):
-        assignment_files = next(os.walk(course_dir))[2]
+    def assignment_num_from_diff(self, diff):
+        result = diff.replace('-', '').strip()
+        if result.startswith('0'):
+            result = result.replace('0', '')
+        if re.search('^\d+$', result):
+            return int(result)
+
+
+    def find_rename_format(self, assignment_files):
         detected_format = self.detect_format(assignment_files)
         return detected_format if detected_format else self.dao.user_data['destination']['rename_format']
 
@@ -297,10 +299,12 @@ class Scraper:
     def detect_format(self, assignment_files):
         
         for assignment in assignment_files:
-            # Remove the .pdf file extension.
-            assignment = assignment[:-4]
+            assignment = self.remove_extension(assignment)
             # If the file name ends with at least one digit replace them with $-signs to get the format.
             num_digits =  sum(char.isdigit() for char in assignment)
             if num_digits > 0:
                 return re.sub(r'\d+$', '$' * num_digits, assignment)
+
+    def remove_extension(self, file_name):
+        return file_name[:-4]
 

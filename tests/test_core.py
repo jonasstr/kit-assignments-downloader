@@ -25,3 +25,7 @@ class TestCore(BaseUnitTest):
         assignment_files = ['Blatt-05.pdf', 'Blatt-01.pdf', 'Blatt-08.pdf', 'Blatt-06.pdf']
         self.assertEqual(self.scraper.latest_assignment(assignment_files, 'Blatt-$$'), 8)
 
+    def test_find_latest_assignment_two_digit_num(self):
+        assignment_files = ['Blatt-05.pdf', 'Blatt-10.pdf']
+        self.assertEqual(self.scraper.latest_assignment(assignment_files, 'Blatt-$$'), 10)
+
