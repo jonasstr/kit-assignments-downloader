@@ -29,11 +29,12 @@ class Scraper:
     :type dst: dict
 
     """
-    def __init__(self, driver, dao):
+    def __init__(self, driver, dao, verbose):
         self.driver = driver
         self.wait = WebDriverWait(self.driver, 10)
         self.main_page = "https://ilias.studium.kit.edu/login.php"
         self.dao = dao
+        self.verbose = verbose
 
     def on_any_page(self):
         """
@@ -51,7 +52,8 @@ class Scraper:
         """Opens the ilias home page and logs the user in with the login
             credentials specified in the user.yml file.
         """
-        with logger.bar("Opening main page and logging in..\n"):
+        msg = self.msg("Opening main page and logging in..\n")
+        with logger.bar(msgs, self.verbose):
             self.driver.get(self.main_page)
             # Click on login button.
             self.driver.find_element_by_id('f807').click()        
@@ -128,7 +130,8 @@ class Scraper:
         if len(values) == 2:
             path = self.format_assignment_name(values[0], assignment_num)
 
-        with logger.bar("Downloading '{}' from {}".format(assignment, course['name']), True):
+        #msg = self.msg("Downloading '{}' from {}".format(assignment, course['name']))
+        with logger.bar("Downloading '{}' from {}".format(assignment, course['name']), show_done=True):
             # Open the course page in a new tab (and switch to it as specified in firefox preferences).
             self.click_link(course['name'], True)
             self.switch_to_last_tab()
@@ -144,6 +147,9 @@ class Scraper:
             self.driver.close()
             self.driver.switch_to.window(self.driver.window_handles[0])
             return assignment
+
+    def msg(self, verbose, silent=None):
+        return {'verbose':verbose, 'silent':silent}
 
 
     def format_assignment_name(self, name, assignment_num):
@@ -241,7 +247,7 @@ class Scraper:
             assignment = self.download(course, assignment_num)
         if move:
             if not rename_format:
-                rename_format = self.dao['destination']['rename_format']               	                
+                rename_format = self.dao.user_data['destination']['rename_format']               	                
             self.move_and_rename(assignment, course, assignment_num, rename_format)
 
 

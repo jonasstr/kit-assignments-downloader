@@ -6,7 +6,6 @@ from colorama import Fore, Style
 from colorama import init
 import click
 
-from kita.misc.logger import Logger
 import kita.misc.utils as utils
 
 class Assistant:
@@ -16,7 +15,7 @@ class Assistant:
         init()
         self.yaml = yaml
         self.dao = dao    
-        root = tk.Tk() 
+        root = tk.Tk()
         root.withdraw()
         root.wm_attributes("-topmost", True)
 

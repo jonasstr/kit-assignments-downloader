@@ -108,6 +108,7 @@ def setup_incorrectly(file_name, path):
             "\nUse 'kita setup' before downloading assignments.".format(file_name))
         return True
 
+
 @cli.command()
 @click.option('--config', '-cf', is_flag=True, help="Change the download locations for the courses.")
 @click.option('--user', '-u', is_flag=True, help="Change the current user and the root path for downloads.")
@@ -130,9 +131,6 @@ def setup(config, user):
 
 def add(config):
     """Add a new course to the list of supported courses."""
-
-    
-
 
 def create_profile():
     """Create a Firefox profile required for navigating on a webpage.
@@ -160,11 +158,11 @@ def create_profile():
     return profile
 
 
-def create_scraper(headless):
+def create_scraper(headless, verbose):
     driver = webdriver.Firefox(firefox_profile=create_profile(),
         executable_path=gecko_path,
         options=get_options() if headless else None)
-    return core.Scraper(driver, dao)
+    return core.Scraper(driver, dao, verbose)
 
 
 @cli.command()
@@ -174,7 +172,8 @@ def create_scraper(headless):
     " (same as 'kita update') or keep them in the browser's download directory (default: move).")
 @click.option('--all', '-a', is_flag=True, help="Download assignments from all specified courses.")
 @click.option('--headless/--show', '-hl/-s', default=True, help="Start the browser in headless mode (no visible UI).")
-def get(course_names, assignment_num, move, all, headless):
+@click.option('--verbose', '-v', is_flag=True, help="Print additional information during the download process.")
+def get(course_names, assignment_num, move, all, headless, verbose):
     """Download one or more assignments from the specified course(s) and move them into the correct folders."""
 
     if is_positive_int(assignment_num):
@@ -190,7 +189,7 @@ def get(course_names, assignment_num, move, all, headless):
         print("Assignment number must be an integer or in the correct format!")
         return
     
-    scraper = create_scraper(headless)
+    scraper = create_scraper(headless, verbose)
     courses_to_iterate = dao.config_data if all else course_names
     
     for name in courses_to_iterate:
@@ -203,11 +202,12 @@ def get(course_names, assignment_num, move, all, headless):
 @cli.command()
 @click.argument('course_names', nargs=-1, required=False, type=click.Choice(dao.config_data))
 @click.option('--all', '-a', is_flag=True, help="Update assignment directories for all specified courses.")
-@click.option('--headless/--visible', '-hl/-v', default=True,  help="Start the browser in headless mode (no visible UI).")
+@click.option('--headless/--show', '-hl/-s', default=True, help="Start the browser in headless mode (no visible UI).")
+@click.option('--verbose', '-v', is_flag=True, help="Print additional information during the download process.")
 def update(course_names, all, headless):
     """Update one or more courses by downloading the latest assignments."""
     
-    scraper = create_scraper(headless)
+    scraper = create_scraper(headless, verbose)
     all = True if not course_names else all
     courses_to_iterate = dao.config_data if all else course_names
     

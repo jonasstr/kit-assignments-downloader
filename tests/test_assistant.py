@@ -83,6 +83,3 @@ class TestAssistant(BaseUnitTest):
         expected_gbi_folder = os.path.join(self.root_path, "Downloads", expected_course_name)
         self.assertTrue(os.path.exists(expected_gbi_folder))
 
-    def full_course_name(self, course_key):
-        return self.dao.config_data[course_key]['name']
-

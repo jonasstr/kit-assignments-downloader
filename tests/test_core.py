@@ -1,13 +1,12 @@
 from kita.core import Scraper
 from tests.base import BaseUnitTest
- 
 
 class TestCore(BaseUnitTest):
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.scraper = Scraper(None, cls.dao)
+        cls.scraper = Scraper(None, cls.dao, None)
 
     def test_format_assignment_name_leading_zero(self):
         format = 'Blatt_$$'
