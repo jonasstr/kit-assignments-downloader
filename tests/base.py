@@ -15,18 +15,21 @@ def create_dao(yaml):
     dao = Dao(gecko_path, "data/mock_user.yml", "data/mock_config.yml", yaml)
     return dao
 
+
 def create_yaml():
-    yaml = YAML(typ='rt')
+    yaml = YAML(typ="rt")
     yaml.indent(mapping=2, sequence=4, offset=2)
     yaml.compact(seq_seq=False, seq_map=False)
     return yaml
 
+
 def delete_temp_folders():
-    shutil.rmtree(os.path.join(os.path.dirname(__file__), "Downloads"), ignore_errors=True)
+    shutil.rmtree(
+        os.path.join(os.path.dirname(__file__), "Downloads"), ignore_errors=True
+    )
 
 
 class BaseUnitTest(unittest.TestCase):
-
     @classmethod
     def setUpClass(cls):
         cls.root_path = os.path.dirname(__file__)
@@ -42,5 +45,4 @@ class BaseUnitTest(unittest.TestCase):
         mock_print.assert_not_called()
 
     def full_course_name(self, course_key):
-        return self.dao.config_data[course_key]['name']
-
+        return self.dao.config_data[course_key]["name"]

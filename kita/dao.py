@@ -6,15 +6,15 @@ from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 
 
-class UnsafeCommentedMap(CommentedMap):        
-
+class UnsafeCommentedMap(CommentedMap):
     def __getitem__(self, key):
         if key in self:
             return CommentedMap.__getitem__(self, key)
-        else: click.echo("Key {} not found!".format(key))
+        else:
+            click.echo("Key {} not found!".format(key))
+
 
 class Dao:
-
     def __init__(self, gecko_path, user_yml_path, config_yml_path, yaml):
         self.gecko_path = gecko_path
         self.user_yml_path = user_yml_path
@@ -23,7 +23,6 @@ class Dao:
         self.root_path = None
         self.config_data = None
         self.yaml = yaml
-        
 
     def try_load_file(self, path, error_msg=None):
         """Tries to load the specified yaml file.
@@ -36,21 +35,22 @@ class Dao:
         :rtype: dict
         """
         try:
-            with open(path, 'rb') as file:
+            with open(path, "rb") as file:
                 return self.yaml.load(file)
         except Exception as e:
             raise
             if error_msg:
                 click.echo(error_msg)
-   
-    
+
     def load_data(self, suppress_access_errors=False):
         """Loads the user.yml and config.yml files."""
-        self.user_data = self.try_load_file(self.user_yml_path,
-            error_msg = "Error, cannot find user.yml. \n"
-                    "Use 'kita setup' before downloading assignments.")
-        self.config_data = self.try_load_file(self.config_yml_path,
-            error_msg = "Error, cannot find config.yml.")
+        self.user_data = self.try_load_file(
+            self.user_yml_path,
+            error_msg="Error, cannot find user.yml. \n" "Use 'kita setup' before downloading assignments.",
+        )
+        self.config_data = self.try_load_file(
+            self.config_yml_path, error_msg="Error, cannot find config.yml."
+        )
 
         # Caution! Only use when program logic does not depend on possible null state of attributes! (e.g. for logging)
         # May be hard to find sources for unexpected behaviour or can hide bugs!
@@ -59,19 +59,20 @@ class Dao:
             self.config_data = UnsafeCommentedMap(self.config_data)
 
     def load_user(self):
-        self.user_data = self.try_load_file(self.user_yml_path,
-            error_msg = "Error, cannot find user.yml. \n"
-                    "Use 'kita setup' before downloading assignments.")
+        self.user_data = self.try_load_file(
+            self.user_yml_path,
+            error_msg="Error, cannot find user.yml. \n" "Use 'kita setup' before downloading assignments.",
+        )
 
     def load_config(self):
-        self.config_data = self.try_load_file(self.config_yml_path,
-            error_msg = "Error, cannot find config.yml.")
+        self.config_data = self.try_load_file(
+            self.config_yml_path, error_msg="Error, cannot find config.yml."
+        )
 
     def create_user(self, data):
         os.makedirs(os.path.dirname(self.user_yml_path), exist_ok=True)
-        with open(self.user_yml_path, 'w', encoding='utf-8') as user_path:
+        with open(self.user_yml_path, "w", encoding="utf-8") as user_path:
             self.yaml.dump(data, user_path)
-
 
     def dump_config(self):
         """Dumps the specified course path into the config.yml file for a given course.
@@ -82,14 +83,13 @@ class Dao:
         :type course_path: str
         """
         # Open config.yml in read binary mode.
-        with open(self.config_yml_path, 'w', encoding='utf-8') as cfg_path:
+        with open(self.config_yml_path, "w", encoding="utf-8") as cfg_path:
             self.yaml.dump(CommentedMap(self.config_data), cfg_path)
-
 
     def added_courses(self):
         result = []
         for course in self.config_data:
-            path = self.config_data[course]['path']
+            path = self.config_data[course]["path"]
             if path:
                 result.append(course)
         return result
