@@ -13,7 +13,7 @@ class Assistant:
         init()
         self.yaml = yaml
         self.dao = dao
-        
+
 
     def echo(self, text, is_prompt=False):
         """Forwards the given text to click.echo() and optionally applies a different style to the text."""
