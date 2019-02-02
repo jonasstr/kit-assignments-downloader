@@ -1,6 +1,8 @@
-# KIT Assignments Downloader
+# KIT Assignments Downloader 
+[![Build Status](https://travis-ci.com/jonasstr/scripts.svg?token=KxpvyZCyyQVwpjRDjaJm&branch=master)](https://travis-ci.com/jonasstr/scripts)
 
-An unofficial assignments downloader for [ilias.studium.kit.edu](http://ilias.studium.kit.edu/).
+An unofficial assignments downloader for [ilias.studium.kit.edu](http://ilias.studium.kit.edu/).  
+
 
 
 ## Why do I need this?
