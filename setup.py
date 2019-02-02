@@ -27,6 +27,7 @@ setup(name='kita',
 	package_data={
 		'': ['LICENSE', 'config.yml', 'geckodriver.exe'],
 	},
+	test_suite='tests',
 	include_package_data=True,
 	install_requires=[
 		'click',
@@ -34,8 +35,9 @@ setup(name='kita',
 		'ruamel.yaml>0.15',
 		'selenium>=3'
 	],
-	entry_points='''
-		[console_scripts]
-		kita=kita.cli:cli
-	'''
+	entry_points={
+		'console_scripts': [
+			'kita=kita.cli:cli',
+		],
+	}
 )
