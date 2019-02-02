@@ -1,5 +1,6 @@
 # KIT Assignments Downloader 
 [![Build Status](https://travis-ci.com/jonasstr/scripts.svg?token=KxpvyZCyyQVwpjRDjaJm&branch=master)](https://travis-ci.com/jonasstr/scripts)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 An unofficial assignments downloader for [ilias.studium.kit.edu](http://ilias.studium.kit.edu/).  
 
