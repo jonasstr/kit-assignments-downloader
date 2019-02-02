@@ -1,6 +1,4 @@
 import os
-import tkinter as tk
-from tkinter import filedialog
 
 from colorama import Fore, Style
 from colorama import init
@@ -14,10 +12,7 @@ class Assistant:
         # Initialize colorama.
         init()
         self.yaml = yaml
-        self.dao = dao    
-        root = tk.Tk()
-        root.withdraw()
-        root.wm_attributes("-topmost", True)
+        self.dao = dao
 
 
     def echo(self, text, is_prompt=False):

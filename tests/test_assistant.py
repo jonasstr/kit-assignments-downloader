@@ -53,13 +53,13 @@ class TestAssistant(BaseUnitTest):
     def test_kit_folder_should_be_detected_with_subfolders(self):
         course_folder = "Programmieren"
         sub_folders = ["Some folder", "", "somefile.txt", "Übungen"]
-        expected_result = {'course_key' : 'prg', 'folder_name' : 'Programmieren\\Übungen'}
+        expected_result = {'course_key' : 'prg', 'folder_name' : os.path.join("Programmieren", "Übungen")}
         self.assertEqual(self.assistant.search_for_assignments_folder(course_folder, sub_folders), expected_result)
 
     def test_kit_folder_should_be_detected_long_path_name_with_subfolders(self):
         course_folder = "Höhere Mathematik 1"
         sub_folders = ["Some folder", "", "somefile.txt", "Übungsblätter"]
-        expected_result = {'course_key' : 'hm', 'folder_name' : 'Höhere Mathematik 1\\Übungsblätter'}
+        expected_result = {'course_key' : 'hm', 'folder_name' : os.path.join('Höhere Mathematik 1', 'Übungsblätter')}
         self.assertEqual(self.assistant.search_for_assignments_folder(course_folder, sub_folders), expected_result)
 
     def test_create_empty_download_folder(self):

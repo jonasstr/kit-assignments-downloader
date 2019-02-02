@@ -1,15 +1,17 @@
 import logging
 import os
+from pathlib import Path
 import re
 import sys
 import traceback
 
 import click
-from pathlib import Path
 from logging.handlers import RotatingFileHandler
 from ruamel.yaml import YAML
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
+import tkinter as tk
+from tkinter import filedialog
 
 from kita import core
 from kita.dao import Dao
@@ -115,6 +117,9 @@ def setup_incorrectly(file_name, path):
 def setup(config, user):
     """Start the command line based setup assistant or change previous settings."""
 
+    root = tk.Tk()
+    root.withdraw()
+    root.wm_attributes("-topmost", True)
     assistant = Assistant(yaml, dao)
     # Setup user.yml if either the --user option has been provided or no options at all.
     if user or user == config:
