@@ -1,4 +1,4 @@
-
+sudo: yes
 language: python
 
 python:
