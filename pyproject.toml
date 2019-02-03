@@ -3,6 +3,7 @@ line-length = 111
 include = '''
 /(
     \.pyi?
+  | /tests/
   | kita/
 )/
 '''
