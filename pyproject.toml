@@ -3,7 +3,7 @@ line-length = 111
 include = '''
 /(
     \.pyi?
-  | kita
+  | /kita
 )/
 '''
 exclude = '''
