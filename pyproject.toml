@@ -3,8 +3,11 @@ line-length = 111
 py36 = true
 include = '''
 /(
-    \.pyi?
+    '\.pyi?$'
+  | /tests/
   | tests
+  | /tests
+  | tests/
   | kita/
 )/
 '''
