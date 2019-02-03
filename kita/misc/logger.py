@@ -78,3 +78,27 @@ def strict(msg, verbose=False, show_done=False):
 
 def silent(verbose_msg, silent_msg, verbose=False, show_done=False):
     return SilentLogger(verbose_msg, silent_msg, verbose, show_done)
+
+
+class LoggerV2:
+    def __init__(self, course):
+        self.course = course
+        self.prev_output = None
+        self.latest_output = None
+
+    def __enter__(self):
+        return self
+
+    def update(self, num):
+        if self.latest_output:
+            num = "{}, {}".format(self.latest_output, num)
+            self.prev_output = self.latest_output
+        print("\rUpdating {}: {}..".format(self.course, num), flush=True, end="")
+        self.latest_output = num
+
+    def __exit__(self, exc_type, exc_value, tb):
+        if exc_value is not None and self.prev_output is None:
+            print("\rUpdating {}: already up to date.".format(self.course), flush=False, end="\n")
+        else:
+            output = self.prev_output if self.prev_output else self.latest_output
+            print("\rUpdating {}: {}, done.".format(self.course, output), flush=False, end="\n")

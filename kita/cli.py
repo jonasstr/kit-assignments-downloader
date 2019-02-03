@@ -235,7 +235,7 @@ def get(course_names, assignment_num, move, all, headless, verbose):
 @click.option(
     "--verbose", "-v", is_flag=True, help="Print additional information during the download process."
 )
-def update(course_names, all, headless):
+def update(course_names, all, headless, verbose):
     """Update one or more courses by downloading the latest assignments."""
 
     scraper = create_scraper(headless, verbose)
@@ -245,7 +245,7 @@ def update(course_names, all, headless):
     for name in courses_to_iterate:
         try:
             course_ = dao.config_data[name]
-            scraper.update_directory(course_, name)
+            scraper.update_directory(course_, name, verbose)
         except (IOError, OSError):
             raise
             print("Invalid destination path for this assignment!")

@@ -55,7 +55,7 @@ class Scraper:
             credentials specified in the user.yml file.
         """
         msg = self.msg("Opening main page and logging in..\n")
-        with logger.bar(msgs, self.verbose):
+        with logger.strict(msgs, self.verbose):
             self.driver.get(self.main_page)
             # Click on login button.
             self.driver.find_element_by_id("f807").click()
@@ -132,6 +132,7 @@ class Scraper:
             path = self.format_assignment_name(values[0], assignment_num)
 
         # msg = self.msg("Downloading '{}' from {}".format(assignment, course['name']))
+        # silent_msg = "Updating LA: "
         with logger.bar("Downloading '{}' from {}".format(assignment, course["name"]), show_done=True):
             # Open the course page in a new tab (and switch to it as specified in firefox preferences).
             self.click_link(course["name"], True)
@@ -262,9 +263,11 @@ class Scraper:
 
         if latest_assignment > 0:
             assignment = self.format_assignment_name(rename_format, latest_assignment)
-            print("Detected latest {} assignment: {}".format(course_name.upper(), assignment + ".pdf"))
+            if self.verbose:
+                print("Updating {} assignments, latest: {}".format(course_name.upper(), assignment + ".pdf"))
         else:
-            print("No assignments found in {} directory, starting at 1.".format(course_name.upper()))
+            if self.verbose:
+                print("No assignments found in {} directory, starting at 1.".format(course_name.upper()))
 
         try:
             while True:
