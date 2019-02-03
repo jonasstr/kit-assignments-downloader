@@ -13,6 +13,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 
 from kita.misc import logger
+from kita.misc.logger import ProgressLogger, SilentProgressLogger
 
 
 class Scraper:
@@ -55,7 +56,7 @@ class Scraper:
             credentials specified in the user.yml file.
         """
         msg = self.msg("Opening main page and logging in..\n")
-        with logger.strict(msgs, self.verbose):
+        with logger.strict(msg, self.verbose):
             self.driver.get(self.main_page)
             # Click on login button.
             self.driver.find_element_by_id("f807").click()
@@ -133,22 +134,25 @@ class Scraper:
 
         # msg = self.msg("Downloading '{}' from {}".format(assignment, course['name']))
         # silent_msg = "Updating LA: "
-        with logger.bar("Downloading '{}' from {}".format(assignment, course["name"]), show_done=True):
-            # Open the course page in a new tab (and switch to it as specified in firefox preferences).
-            self.click_link(course["name"], True)
-            self.switch_to_last_tab()
-            # Click on the assignments folder.
-            self.click_link(course["assignment"]["link_name"])
-            if path:
-                # Click on the additional folder (if specified).
-                self.click_link(path)
-            # Download the assigment.
-            self.click_link(assignment)
-            time.sleep(1)
-            # Close this tab.
-            self.driver.close()
-            self.driver.switch_to.window(self.driver.window_handles[0])
-            return assignment
+        # logger = logger.ProgressLogger(assignment) if self.verbose else logger.SilentProgressLogger
+        # with logger.bar("Downloading '{}' from {}".format(assignment, course["name"]), show_done=True):
+
+        # print("Download")
+        # Open the course page in a new tab (and switch to it as specified in firefox preferences).
+        self.click_link(course["name"], True)
+        self.switch_to_last_tab()
+        # Click on the assignments folder.
+        self.click_link(course["assignment"]["link_name"])
+        if path:
+            # Click on the additional folder (if specified).
+            self.click_link(path)
+        # Download the assigment.
+        self.click_link(assignment)
+        time.sleep(1)
+        # Close this tab.
+        self.driver.close()
+        self.driver.switch_to.window(self.driver.window_handles[0])
+        return assignment
 
     def msg(self, verbose, silent=None):
         return {"verbose": verbose, "silent": silent}
@@ -229,6 +233,7 @@ class Scraper:
             dst_folder, self.format_assignment_name(rename_format, assignment_num) + ".pdf"
         )
 
+        # TODO: create base class for done logger (maybe make ProgressLogger subclass)
         with logger.bar("Moving assignment to {}".format(dst_folder), True):
             shutil.move(src, dst_file)
 
@@ -270,12 +275,20 @@ class Scraper:
                 print("No assignments found in {} directory, starting at 1.".format(course_name.upper()))
 
         try:
-            while True:
-                self.get(course, latest_assignment + 1, True, rename_format)
-                latest_assignment += 1
+            logger = (
+                ProgressLogger(course_name.upper(), rename_format)
+                if self.verbose
+                else SilentProgressLogger(course_name.upper())
+            )
+            with logger:
+                while True:
+                    logger.update(latest_assignment + 1)
+                    self.get(course, latest_assignment + 1, True, rename_format)
+                    latest_assignment += 1
         except (IOError, OSError):
             print("Invalid destination path for this assignment!")
         except:
+            raise
             print("Assignment not found!")
 
     def latest_assignment(self, assignment_files, rename_format):

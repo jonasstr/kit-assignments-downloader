@@ -18,7 +18,6 @@ from kita.dao import Dao
 from kita.assistant import Assistant
 import kita.misc.utils as utils
 
-print(os.path.join(Path(__file__).resolve().parents[1], "geckodriver"))
 gecko_path = os.path.join(Path(__file__).resolve().parents[1], "geckodriver")
 user_yml_path = os.path.join(click.get_app_dir("kita"), "user.yml")
 config_yml_path = os.path.join(Path(__file__).parents[0], "config.yml")
@@ -243,15 +242,8 @@ def update(course_names, all, headless, verbose):
     courses_to_iterate = dao.config_data if all else course_names
 
     for name in courses_to_iterate:
-        try:
-            course_ = dao.config_data[name]
-            scraper.update_directory(course_, name, verbose)
-        except (IOError, OSError):
-            raise
-            print("Invalid destination path for this assignment!")
-        except:
-            raise
-            print("Assignment not found!")
+        course_ = dao.config_data[name]
+        scraper.update_directory(course_, name)
     scraper.driver.quit()
 
 

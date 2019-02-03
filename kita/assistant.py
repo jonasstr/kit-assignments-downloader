@@ -35,6 +35,9 @@ class Assistant:
         """Starts the setup assistant for setting up the user.yml file.    
         Saves the login credentials of the user and the root path for downloading assignments.
         """
+        import tkinter as tk
+        from tkinter import filedialog
+
         # user.yml already exists.
         if os.path.isfile(self.dao.user_yml_path):
             if not self.confirm("Kita is already set up. Overwrite existing config?"):
@@ -68,7 +71,6 @@ class Assistant:
         """Starts the setup assistant for setting up the config.yml file."""
         if os.path.isfile(self.dao.user_yml_path):
             self.dao.load_user()
-
             root_path = self.dao.user_data["destination"]["root_path"]
             if not os.path.isdir(root_path):
                 self.echo(

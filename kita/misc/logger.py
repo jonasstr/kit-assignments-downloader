@@ -4,6 +4,31 @@ from selenium.common.exceptions import TimeoutException
 from kita.misc import utils
 
 
+class StaticLogger:
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __enter__(self):
+        print(self.msg)
+
+    def __exit__(self, exc_type, exc_value, tb):
+        ...
+
+
+class StrictStaticLogger(StaticLogger):
+    def __init__(self, msg, verbose):
+        super().__init__(msg)
+        self.verbose = verbose
+
+    def __enter__(self):
+        if self.verbose:
+            super().__enter__()
+
+
+def strict(msg, verbose):
+    return StrictStaticLogger(msg, verbose)
+
+
 class BaseProgressLogger:
     def __enter__(self):
         return self
