@@ -1,6 +1,5 @@
 # KIT Assignments Downloader 
 [![Build Status](https://travis-ci.com/jonasstr/scripts.svg?token=KxpvyZCyyQVwpjRDjaJm&branch=master)](https://travis-ci.com/jonasstr/scripts)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 An unofficial assignments downloader for [ilias.studium.kit.edu](http://ilias.studium.kit.edu/).  
 
@@ -27,8 +26,7 @@ To install this package open a console and type:
   
 To complete the installation use the following command:
 
-    kita setup
-      
+    kita setup      
 Note: The setup assistant requires you to input your ilias user name and password which will be stored locally in a file called user.yml. **Do not share this file!**
 
 ## Getting started
