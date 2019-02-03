@@ -43,7 +43,7 @@ class BaseUnitTest(unittest.TestCase):
         mock_print.assert_called_once_with("\r" + msg, end="", flush=True)
 
     def assert_print_called_done(self, msg, mock_print):
-        mock_print.assert_called_with("\r" + msg, end="\n", flush=False)
+        mock_print.assert_called_with(msg, end="\n", flush=False)
 
     def assert_print_not_called(self, mock_print):
         mock_print.assert_not_called()

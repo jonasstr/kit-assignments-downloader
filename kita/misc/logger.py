@@ -4,97 +4,42 @@ from selenium.common.exceptions import TimeoutException
 from kita.misc import utils
 
 
-class ProgressBar:
-    def __init__(self, message, silent=False, show_done=False):
-        self.silent = silent
-        if not self.silent:
-            self.output = "\r" + utils.reformat(message["verbose"])
-            self.done = ", done." if show_done else ""
-            print(self.output, end="", flush=True)
-
+class BaseProgressLogger:
     def __enter__(self):
-        pass
+        return self
 
-    def __exit__(self, exc_type, exc_value, tb):
-        if not self.silent:
-            if isinstance(exc_value, TimeoutException):
-                self.done = ", cancelled!"
-            print(self.done, end="\n", flush=False)
+    def update(self, msg):
+        print("\r" + msg, end="", flush=True)
 
 
-class StrictLogger:
-    def __init__(self, msg, verbose, show_done):
-        self.verbose = verbose
-        if self.verbose:
-            self.done = ", done" if show_done else ""
-            self.output = "\r" + utils.reformat(msg)
-            print(self.output, end="", flush=True)
+class ProgressLogger(BaseProgressLogger):
+    def __init__(self, course, rename_format):
+        self.course = course
+        self.rename_format = rename_format
 
-    def __enter__(self):
-        pass
+    def update(self, progress):
+        num_digits = self.rename_format.count("$")
+        assignment = self.rename_format.replace("$" * num_digits, str(progress).zfill(num_digits))
+        super().update("Downloading '{}' from {}".format(assignment, self.course))
 
     def __exit__(self, exc_type, exc_value, tb):
         if isinstance(exc_value, TimeoutException):
-            self.done = ", cancelled!"
-        if self.verbose:
-            print(self.done, end="\n", flush=False)
+            print(", cancelled.", end="\n", flush=False)
+        print(", done.", end="\n", flush=False)
 
 
-class BaseLogger:
-    def __init__(self, msg, verbose, show_done):
-        self.output = "\r" + utils.reformat(msg)
-        self.verbose = verbose
-        self.done = ", done" if show_done else ""
-        print(self.output, end="", flush=True)
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, exc_type, exc_value, tb):
-        if hasattr(self, "done"):
-            if isinstance(exc_value, TimeoutException):
-                self.done = ", cancelled!"
-            print(self.done, end="\n", flush=False)
-
-
-class StrictLogger(BaseLogger):
-    def __init__(self, msg, verbose, show_done):
-        if verbose:
-            super().__init__(msg, verbose, show_done)
-
-
-class SilentLogger(BaseLogger):
-    def __init__(self, verbose_msg, silent_msg, verbose, show_done):
-        super().__init__(verbose_msg if verbose else silent_msg, verbose, show_done)
-
-
-def bar(message, silent=False, show_done=False):
-    return ProgressBar(message, silent, show_done)
-
-
-def strict(msg, verbose=False, show_done=False):
-    return StrictLogger(msg, verbose, show_done)
-
-
-def silent(verbose_msg, silent_msg, verbose=False, show_done=False):
-    return SilentLogger(verbose_msg, silent_msg, verbose, show_done)
-
-
-class LoggerV2:
+class SilentProgressLogger(BaseProgressLogger):
     def __init__(self, course):
         self.course = course
         self.prev_output = None
         self.latest_output = None
 
-    def __enter__(self):
-        return self
-
-    def update(self, num):
+    def update(self, progress):
         if self.latest_output:
-            num = "{}, {}".format(self.latest_output, num)
+            progress = "{}, {}".format(self.latest_output, progress)
             self.prev_output = self.latest_output
-        print("\rUpdating {}: {}..".format(self.course, num), flush=True, end="")
-        self.latest_output = num
+        super().update("Updating {}: {}..".format(self.course, progress))
+        self.latest_output = progress
 
     def __exit__(self, exc_type, exc_value, tb):
         if exc_value is not None and self.prev_output is None:
