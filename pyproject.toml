@@ -8,19 +8,19 @@ include = '''
   | kita/
 )/
 '''
-exclude = '''
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | buck-out
-  | build
-  | dist
-  | tests/data
-  | env
-  | kita.egg-info
-)/
-'''
+#exclude = '''
+#/(
+#    \.git
+#  | \.hg
+#  | \.mypy_cache
+#  | \.tox
+#  | \.venv
+#  | _build
+#  | buck-out
+#  | build
+#  | dist
+#  | tests/data
+#  | env
+#  | kita.egg-info
+#)/
+#'''
