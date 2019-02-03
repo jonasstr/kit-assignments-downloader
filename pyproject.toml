@@ -1,9 +1,10 @@
 [tool.black]
 line-length = 111
+py36 = true
 include = '''
 /(
     \.pyi?
-  | /tests/
+  | tests
   | kita/
 )/
 '''
