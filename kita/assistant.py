@@ -116,9 +116,7 @@ class Assistant:
 
     def update_selected_courses(self, added_courses):
         self.selected = ", ".join(course.upper() for course in added_courses)
-        self.choice = ", ".join(
-            key.upper() for key in self.dao.config_data.keys() if key not in added_courses
-        )
+        self.choice = ", ".join(key.upper() for key in self.dao.config_data.keys() if key not in added_courses)
 
     def show_assignments_save_location_dialog(self, selection):
         self.echo(

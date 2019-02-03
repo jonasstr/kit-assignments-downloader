@@ -1,29 +1,20 @@
 [tool.black]
 line-length = 111
 py36 = true
-include = '''
+include = '\.pyi?$'
+
+exclude = '''
 /(
-    '\.pyi?$'
-  | /tests/
-  | tests
-  | /tests
-  | tests/
-  | kita/
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | tests/data
+  | env
+  | kita.egg-info
 )/
-'''
-#exclude = '''
-#/(
-#    \.git
-#  | \.hg
-#  | \.mypy_cache
-#  | \.tox
-#  | \.venv
-#  | _build
-#  | buck-out
-#  | build
-#  | dist
-#  | tests/data
-#  | env
-#  | kita.egg-info
-#)/
-#'''
