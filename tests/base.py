@@ -24,9 +24,7 @@ def create_yaml():
 
 
 def delete_temp_folders():
-    shutil.rmtree(
-        os.path.join(os.path.dirname(__file__), "Downloads"), ignore_errors=True
-    )
+    shutil.rmtree(os.path.join(os.path.dirname(__file__), "Downloads"), ignore_errors=True)
 
 
 class BaseUnitTest(unittest.TestCase):

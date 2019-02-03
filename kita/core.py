@@ -233,7 +233,6 @@ class Scraper:
 
     def get(self, course, assignment_num, move, rename_format=None):
         """
-
         :param course: 
         :param assignment_num: 
         :param move: 

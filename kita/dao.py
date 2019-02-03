@@ -48,9 +48,7 @@ class Dao:
             self.user_yml_path,
             error_msg="Error, cannot find user.yml. \n" "Use 'kita setup' before downloading assignments.",
         )
-        self.config_data = self.try_load_file(
-            self.config_yml_path, error_msg="Error, cannot find config.yml."
-        )
+        self.config_data = self.try_load_file(self.config_yml_path, error_msg="Error, cannot find config.yml.")
 
         # Caution! Only use when program logic does not depend on possible null state of attributes! (e.g. for logging)
         # May be hard to find sources for unexpected behaviour or can hide bugs!
@@ -65,9 +63,7 @@ class Dao:
         )
 
     def load_config(self):
-        self.config_data = self.try_load_file(
-            self.config_yml_path, error_msg="Error, cannot find config.yml."
-        )
+        self.config_data = self.try_load_file(self.config_yml_path, error_msg="Error, cannot find config.yml.")
 
     def create_user(self, data):
         os.makedirs(os.path.dirname(self.user_yml_path), exist_ok=True)
