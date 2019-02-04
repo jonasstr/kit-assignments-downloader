@@ -3,6 +3,7 @@ import re
 import shutil
 import time
 
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
@@ -52,14 +53,14 @@ class Scraper:
         """Opens the ilias home page and logs the user in with the login
             credentials specified in the user.yml file.
         """
-        msg = "Opening main page and logging in..\n"
-        with logger.strict(msg, self.verbose):
-            self.driver.get(self.main_page)
-            # Click on login button.
-            self.driver.find_element_by_id("f807").click()
-            # Fill in login credentials and login.
-            self.driver.find_element_by_id("name").send_keys(self.dao.user_data["user_name"])
-            self.driver.find_element_by_id("password").send_keys(self.dao.user_data["password"], Keys.ENTER)
+        self.driver.get(self.main_page)
+        # Click on login button.
+        self.driver.find_element_by_id("f807").click()
+        # Fill in login credentials and login.
+        self.driver.find_element_by_id("name").send_keys(self.dao.user_data["user_name"])
+        self.driver.find_element_by_id("password").send_keys(self.dao.user_data["password"], Keys.ENTER)
+        time.sleep(1)
+        return "Login fehlgeschlagen" not in self.driver.page_source
 
     def path_of(self, name):
         """Retrieves the xpath of the link with the specified name on the current webpage.
@@ -241,12 +242,16 @@ class Scraper:
             assignment = self.download_from(course, assignment_num)
         else:
             if not self.on_any_page():
-                self.to_home()
+                # msg = "Opening main page and logging in..\n"
+                # with logger.strict(msg, self.verbose):
+                if not self.to_home():
+                    return False
             assignment = self.download(course, assignment_num)
         if move:
             if not rename_format:
                 rename_format = self.dao.user_data["destination"]["rename_format"]
             self.move_and_rename(assignment, course, assignment_num, rename_format)
+        return True
 
     def update_directory(self, course, course_name):
         """
@@ -266,20 +271,25 @@ class Scraper:
         else:
             if self.verbose:
                 print("No assignments found in {} directory, starting at 1.".format(course_name.upper()))
-
+        logger = (
+            ProgressLogger(course_name.upper(), rename_format)
+            if self.verbose
+            else SilentProgressLogger(course_name.upper())
+        )
         try:
-            logger = (
-                ProgressLogger(course_name.upper(), rename_format)
-                if self.verbose
-                else SilentProgressLogger(course_name.upper())
-            )
             with logger:
                 while True:
-                    self.get(course, latest_assignment + 1, True, rename_format)
                     logger.update(latest_assignment + 1)
+                    if not self.get(course, latest_assignment + 1, True, rename_format):
+                        raise TimeoutException(
+                            "Login failed! Please run 'kita setup --user' "
+                            "and enter your correct username and password."
+                        )
                     latest_assignment += 1
         except (IOError, OSError):
             print("Invalid destination path for this assignment!")
+        except TimeoutException as e:
+            print(str(e).replace("Message: ", ""))
 
     def latest_assignment(self, assignment_files, rename_format):
         """Finds the latest assignment in a list of assignment PDFs."""

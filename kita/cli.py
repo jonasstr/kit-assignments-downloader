@@ -6,6 +6,7 @@ import sys
 import click
 from ruamel.yaml import YAML
 from selenium import webdriver
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.firefox.options import Options
 import tkinter as tk
 
