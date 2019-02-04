@@ -94,18 +94,18 @@ def print_info(ctx, param, value):
 @click.pass_context
 def cli(ctx):
     """Thank you for using the KIT Assignments Downloader!
-    
+
     In order to download assignments make sure the setup was successful
     (otherwise run 'kita setup' again).\n
     To get started, just use the 'kita update la' command
     where 'la' is one of your courses.\n
     If you only want to download a specific assignment, use
-    'kita get la 9' where '9' is the assignment number.\n   
+    'kita get la 9' where '9' is the assignment number.\n
     In case the download isn't working or you encounter any
     bugs/crashes please visit github.com/jonasstr/kita and
     create an issue or contact me via email: uzxhf@student.kit.edu.
     """
-    if str(ctx.invoked_subcommand) is not "setup":
+    if str(ctx.invoked_subcommand) != "setup":
         # Make sure user.py has been created and config.yml exists.
         if setup_incorrectly("user.yml", user_yml_path) or setup_incorrectly("config.yml", config_yml_path):
             sys.exit(1)
@@ -149,7 +149,7 @@ def add(config):
 
 def create_profile():
     """Create a Firefox profile required for navigating on a webpage.
-    
+
     Set the preferences allowing PDFs to be downloaded immediately as well as
     navigating between tabs using keyboard shortcuts.
 

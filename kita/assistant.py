@@ -22,7 +22,9 @@ class Assistant:
         click.echo(color + text)
 
     def prompt(self, text):
-        """Forwards the given text to click.echo() and adds cyan color and a '>' symbol to the start of the string."""
+        """Forwards the given text to click.echo() and adds cyan color and a '>' symbol
+        to the start of the string.
+        """
         return click.prompt(Fore.CYAN + "> " + text)
 
     def confirm(self, text, default=False):
@@ -32,10 +34,9 @@ class Assistant:
         )
 
     def setup_user(self):
-        """Starts the setup assistant for setting up the user.yml file.    
+        """Starts the setup assistant for setting up the user.yml file.
         Saves the login credentials of the user and the root path for downloading assignments.
         """
-        import tkinter as tk
         from tkinter import filedialog
 
         # user.yml already exists.
@@ -74,7 +75,8 @@ class Assistant:
             root_path = self.dao.user_data["destination"]["root_path"]
             if not os.path.isdir(root_path):
                 self.echo(
-                    "\nKita has not been configured correctly (root_path not found).\nUse 'kita setup --user' instead."
+                    "\nKita has not been configured correctly (root_path not found).\n"
+                    "Use 'kita setup --user' instead."
                 )
                 return False
 
@@ -140,8 +142,8 @@ class Assistant:
 
     def create_download_folder(self, course_keys, root_path):
         """
-        :param course_keys: 
-        :param root_path: 
+        :param course_keys:
+        :param root_path:
         """
         download_dir = os.path.join(root_path, "Downloads")
         os.makedirs(download_dir, exist_ok=True)

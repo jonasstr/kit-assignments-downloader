@@ -2,12 +2,9 @@ import os
 import re
 import shutil
 import time
-import traceback
 
-import click
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
-from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
@@ -48,7 +45,7 @@ class Scraper:
         """
         try:
             return not self.driver.current_url == "about:blank"
-        except Exception as e:
+        except Exception:
             return False
 
     def to_home(self):
@@ -84,16 +81,14 @@ class Scraper:
                 after a certain amount of time.
 
         """
-        try:
-            link = self.wait.until(EC.element_to_be_clickable((By.XPATH, self.path_of(name))))
-            if new_tab:
-                actions = ActionChains(self.driver)
-                # Presses CTRL + left mouse click to open the link in a new tab.
-                actions.key_down(Keys.CONTROL).click(link).key_up(Keys.CONTROL).perform()
-            else:
-                self.driver.execute_script("arguments[0].click();", link)
-        except:
-            raise
+
+        link = self.wait.until(EC.element_to_be_clickable((By.XPATH, self.path_of(name))))
+        if new_tab:
+            actions = ActionChains(self.driver)
+            # Presses CTRL + left mouse click to open the link in a new tab.
+            actions.key_down(Keys.CONTROL).click(link).key_up(Keys.CONTROL).perform()
+        else:
+            self.driver.execute_script("arguments[0].click();", link)
 
     def switch_to_last_tab(self):
         """Switches to the current last tab in Firefox."""
@@ -106,11 +101,11 @@ class Scraper:
 
     def download(self, course, assignment_num):
         """Downloads the specified assignment of the given class from ilias.
-        
+
         Retrieves the assignment name by replacing the format attribute of the given course
         as specified in the config.yml file with the specified assignment number
         and append leading zeroes if necessary.
-        
+
         The format attribute may contain an optional previous path name separated by
         a single '/', which will be moved to before downloading the assignment.
 
@@ -174,7 +169,7 @@ class Scraper:
 
     def download_from(self, course, assignment_num):
         """Provides the ability to download an assignment from a different source than ilias.
-        
+
         The external link must be specified as the link attribute in the config.yml file of the given course.
         Uses the assignment:format attribute in the config.yml file to determine the name of the link
         of the assignment to download.
@@ -198,15 +193,15 @@ class Scraper:
 
     def move_and_rename(self, assignment, course, assignment_num, rename_format):
         """Moves and renames a downloaded assignment PDF to the specified destination folder.
-        
+
         Assumes that the name of the PDF is the same as the link of the assignment. If
         the file name is different, this must be specified as the file_format attribute of the
         given course in the config.yml file. The format_assignment_name method will then be used
         to retrieve the correct file name.
-        
+
         The file will be copied to the folder specified by the path attribute of the course
         in the config.yml file relative to the root_path as specified in the user.yml file.
-        
+
         It will be renamed based on the destination/rename_format attribute
         specified in the user.yml file.
 
@@ -239,9 +234,9 @@ class Scraper:
 
     def get(self, course, assignment_num, move, rename_format=None):
         """
-        :param course: 
-        :param assignment_num: 
-        :param move: 
+        :param course:
+        :param assignment_num:
+        :param move:
         """
         assignment = None
         if "link" in course:
@@ -258,8 +253,8 @@ class Scraper:
     def update_directory(self, course, course_name):
         """
 
-        :param course: 
-        :param course_name: 
+        :param course:
+        :param course_name:
         """
         course_dir = os.path.join(self.dao.user_data["destination"]["root_path"], course["path"])
         assignment_files = next(os.walk(course_dir))[2]
@@ -311,7 +306,7 @@ class Scraper:
         result = diff.replace("-", "").strip()
         if result.startswith("0"):
             result = result.replace("0", "")
-        if re.search("^\d+$", result):
+        if re.search(r"^\d+$", result):
             return int(result)
 
     def find_rename_format(self, assignment_files):

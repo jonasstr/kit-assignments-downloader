@@ -1,8 +1,6 @@
 import os
-from pathlib import Path
 
 import click
-from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap
 
 
@@ -27,7 +25,7 @@ class Dao:
     def try_load_file(self, path, error_msg=None):
         """Tries to load the specified yaml file.
         If the path is incorrect, reraises the exception and prints the specified error messsage.
-    
+
         :param path: The absolute of the yaml file to load.
         :type path: str
         :param error_msg: The error message to print in case the file could not be loaded.
@@ -37,7 +35,7 @@ class Dao:
         try:
             with open(path, "rb") as file:
                 return self.yaml.load(file)
-        except Exception as e:
+        except Exception:
             raise
             if error_msg:
                 click.echo(error_msg)
@@ -50,7 +48,8 @@ class Dao:
         )
         self.config_data = self.try_load_file(self.config_yml_path, error_msg="Error, cannot find config.yml.")
 
-        # Caution! Only use when program logic does not depend on possible null state of attributes! (e.g. for logging)
+        # Caution! Only use when program logic does not depend on possible null state of attributes!
+        # (e.g. for logging)
         # May be hard to find sources for unexpected behaviour or can hide bugs!
         if suppress_access_errors:
             self.user_data = UnsafeCommentedMap(self.user_data)
@@ -72,7 +71,7 @@ class Dao:
 
     def dump_config(self):
         """Dumps the specified course path into the config.yml file for a given course.
-    
+
         :param course_key: The key of the course in the config.yml file e.g. la.
         :type course_key: str
         :param course_path: The absolute path of the course directory.
