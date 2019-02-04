@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 import shutil
 import unittest
-import unittest.mock as mock
 
 from ruamel.yaml import YAML
 

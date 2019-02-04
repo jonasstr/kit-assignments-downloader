@@ -52,7 +52,7 @@ class Scraper:
         """Opens the ilias home page and logs the user in with the login
             credentials specified in the user.yml file.
         """
-        msg = self.msg("Opening main page and logging in..\n")
+        msg = "Opening main page and logging in..\n"
         with logger.strict(msg, self.verbose):
             self.driver.get(self.main_page)
             # Click on login button.
@@ -149,9 +149,6 @@ class Scraper:
         self.driver.switch_to.window(self.driver.window_handles[0])
         return assignment
 
-    def msg(self, verbose, silent=None):
-        return {"verbose": verbose, "silent": silent}
-
     def format_assignment_name(self, name, assignment_num):
         """Formats the specified assignment name by replacing all $-signs with the assignment
         number.
@@ -186,7 +183,8 @@ class Scraper:
         format = course["assignment"]["link_format"]
         assignment = self.format_assignment_name(format, assignment_num)
 
-        with logger.bar("Downloading '{}' from {}".format(assignment, course["name"]), True):
+        msg = "Downloading '{}' from {}".format(assignment, course["name"])
+        with logger.state(msg):
             self.driver.find_element_by_link_text(assignment).click()
             time.sleep(1)
             return assignment
@@ -228,8 +226,8 @@ class Scraper:
             dst_folder, self.format_assignment_name(rename_format, assignment_num) + ".pdf"
         )
 
-        # TODO: create base class for done logger (maybe make ProgressLogger subclass)
-        with logger.bar("Moving assignment to {}".format(dst_folder), True):
+        msg = "Moving to {}".format(dst_folder)
+        with logger.state(msg):
             shutil.move(src, dst_file)
 
     def get(self, course, assignment_num, move, rename_format=None):
@@ -277,14 +275,11 @@ class Scraper:
             )
             with logger:
                 while True:
-                    logger.update(latest_assignment + 1)
                     self.get(course, latest_assignment + 1, True, rename_format)
+                    logger.update(latest_assignment + 1)
                     latest_assignment += 1
         except (IOError, OSError):
             print("Invalid destination path for this assignment!")
-        except:
-            raise
-            print("Assignment not found!")
 
     def latest_assignment(self, assignment_files, rename_format):
         """Finds the latest assignment in a list of assignment PDFs."""

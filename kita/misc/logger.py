@@ -1,7 +1,4 @@
-from logging.handlers import RotatingFileHandler
 from selenium.common.exceptions import TimeoutException
-
-from kita.misc import utils
 
 
 class StaticLogger:
@@ -37,7 +34,22 @@ class BaseProgressLogger:
         print("\r" + msg, end="", flush=True)
 
 
-class ProgressLogger(BaseProgressLogger):
+class StateLogger(BaseProgressLogger):
+    def __init__(self, msg):
+        super().update(msg)
+
+    def __exit__(self, exc_type, exc_value, tb):
+        if isinstance(exc_value, TimeoutException):
+            print(", not found.", end="\n", flush=False)
+        else:
+            print(", done.", end="\n", flush=False)
+
+
+def state(msg):
+    return StateLogger(msg)
+
+
+class ProgressLogger(StateLogger):
     def __init__(self, course, rename_format):
         self.course = course
         self.rename_format = rename_format
@@ -46,11 +58,6 @@ class ProgressLogger(BaseProgressLogger):
         num_digits = self.rename_format.count("$")
         assignment = self.rename_format.replace("$" * num_digits, str(progress).zfill(num_digits))
         super().update("Downloading '{}' from {}".format(assignment, self.course))
-
-    def __exit__(self, exc_type, exc_value, tb):
-        if isinstance(exc_value, TimeoutException):
-            print(", cancelled.", end="\n", flush=False)
-        print(", done.", end="\n", flush=False)
 
 
 class SilentProgressLogger(BaseProgressLogger):

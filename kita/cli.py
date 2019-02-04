@@ -1,17 +1,13 @@
-import logging
 import os
 from pathlib import Path
 import re
 import sys
-import traceback
 
 import click
-from logging.handlers import RotatingFileHandler
 from ruamel.yaml import YAML
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import tkinter as tk
-from tkinter import filedialog
 
 from kita import core
 from kita.dao import Dao
@@ -29,40 +25,6 @@ yaml.compact(seq_seq=False, seq_map=False)
 # Create data access object and load data on startup.
 dao = Dao(gecko_path, user_yml_path, config_yml_path, yaml)
 dao.load_data(suppress_access_errors=True)
-
-
-def get_options():
-    """Creates Firefox options for running kita in headless mode."""
-    options = Options()
-    options.headless = True
-    return options
-
-
-def is_positive_int(value):
-    """
-
-    :param value: 
-
-    """
-    return re.search("^\d+$", value)
-
-
-def is_range(value):
-    """
-
-    :param value: 
-
-    """
-    return re.search("^\d+-\d+$", value)
-
-
-def is_sequence(value):
-    """
-
-    :param value: 
-
-    """
-    return re.search("^\d+(?:,\d+)*$", value)
 
 
 def print_info(ctx, param, value):
@@ -143,8 +105,106 @@ def setup(config, user):
     click.echo("\nSetup successful. Type 'kita --help' for details.")
 
 
-def add(config):
-    """Add a new course to the list of supported courses."""
+@cli.command()
+@click.argument("course_names", nargs=-1, required=True, type=click.Choice(dao.config_data))
+@click.argument("assignment_num")
+@click.option(
+    "--move/--keep",
+    "-mv/-kp",
+    default=True,
+    help="Move the downloaded assignments to their course directory"
+    " (same as 'kita update') or keep them in the browser's download directory (default: move).",
+)
+@click.option("--all", "-a", is_flag=True, help="Download assignments from all specified courses.")
+@click.option(
+    "--headless/--show", "-hl/-s", default=True, help="Start the browser in headless mode (no visible UI)."
+)
+@click.option(
+    "--verbose", "-v", is_flag=True, help="Print additional information during the download process."
+)
+def get(course_names, assignment_num, move, all, headless, verbose):
+    """Download one or more assignments from the specified course(s) and move them into the correct folders."""
+    assignments = get_assignments(assignment_num)
+    if assignments is None:
+        print("Assignment number must be an integer or in the correct format!")
+        return
+
+    scraper = create_scraper(headless, verbose)
+    try:
+        for name in courses_to_iterate(course_names, all):
+            course = dao.config_data[name]
+            for num in assignments:
+                scraper.get(course, num, move)
+    finally:
+        scraper.driver.quit()
+
+
+def get_assignments(input):
+    assignments = None
+    if is_positive_int(input):
+        assignments = [input]
+    # Alternative range for assignment nums instead of int. Example: 5-10
+    elif is_range(input):
+        assignment_nums = input.split("-")
+        assignments = range(int(assignment_nums[0]), int(assignment_nums[1]) + 1)
+    # Alternative int sequence for input instead of int. Example: 5,10,11
+    elif is_sequence(input):
+        assignments = input.split(",")
+    return assignments
+
+
+@cli.command()
+@click.argument("course_names", nargs=-1, required=False, type=click.Choice(dao.config_data))
+@click.option("--all", "-a", is_flag=True, help="Update assignment directories for all specified courses.")
+@click.option(
+    "--headless/--show", "-hl/-s", default=True, help="Start the browser in headless mode (no visible UI)."
+)
+@click.option(
+    "--verbose", "-v", is_flag=True, help="Print additional information during the download process."
+)
+def update(course_names, all, headless, verbose):
+    """Update one or more courses by downloading the latest assignments."""
+    scraper = create_scraper(headless, verbose)
+    try:
+        for name in courses_to_iterate(course_names, all):
+            course = dao.config_data[name]
+            scraper.update_directory(course, name)
+    finally:
+        scraper.driver.close()
+
+
+def courses_to_iterate(course_names, all):
+    if not course_names:
+        all = True
+    return dao.config_data if all else course_names
+
+
+def create_scraper(headless, verbose):
+    driver = webdriver.Firefox(
+        firefox_profile=create_profile(),
+        executable_path=gecko_path,
+        options=get_options() if headless else None,
+    )
+    return core.Scraper(driver, dao, verbose)
+
+
+def get_options():
+    """Creates Firefox options for running kita in headless mode."""
+    options = Options()
+    options.headless = True
+    return options
+
+
+def is_positive_int(value):
+    return re.search(r"^\d+$", value)
+
+
+def is_range(value):
+    return re.search(r"^\d+-\d+$", value)
+
+
+def is_sequence(value):
+    return re.search(r"^\d+(?:,\d+)*$", value)
 
 
 def create_profile():
@@ -171,80 +231,6 @@ def create_profile():
     # Move directly to newly opened tab
     profile.set_preference("browser.tabs.loadInBackground", False)
     return profile
-
-
-def create_scraper(headless, verbose):
-    driver = webdriver.Firefox(
-        firefox_profile=create_profile(),
-        executable_path=gecko_path,
-        options=get_options() if headless else None,
-    )
-    return core.Scraper(driver, dao, verbose)
-
-
-@cli.command()
-@click.argument("course_names", nargs=-1, required=True, type=click.Choice(dao.config_data))
-@click.argument("assignment_num")
-@click.option(
-    "--move/--keep",
-    "-mv/-kp",
-    default=True,
-    help="Move the downloaded assignments to their course directory"
-    " (same as 'kita update') or keep them in the browser's download directory (default: move).",
-)
-@click.option("--all", "-a", is_flag=True, help="Download assignments from all specified courses.")
-@click.option(
-    "--headless/--show", "-hl/-s", default=True, help="Start the browser in headless mode (no visible UI)."
-)
-@click.option(
-    "--verbose", "-v", is_flag=True, help="Print additional information during the download process."
-)
-def get(course_names, assignment_num, move, all, headless, verbose):
-    """Download one or more assignments from the specified course(s) and move them into the correct folders."""
-
-    if is_positive_int(assignment_num):
-        assignments = [assignment_num]
-    # Alternative range for assignment_num instead of int. Example: 5-10
-    elif is_range(assignment_num):
-        assignment_nums = assignment_num.split("-")
-        assignments = range(int(assignment_nums[0]), int(assignment_nums[1]) + 1)
-    # Alternative int sequence for assignment_num instead of int. Example: 5,10,11
-    elif is_sequence(assignment_num):
-        assignments = assignment_num.split(",")
-    else:
-        print("Assignment number must be an integer or in the correct format!")
-        return
-
-    scraper = create_scraper(headless, verbose)
-    courses_to_iterate = dao.config_data if all else course_names
-
-    for name in courses_to_iterate:
-        course_ = dao.config_data[name]
-        for num in assignments:
-            scraper.get(course_, num, move)
-    scraper.driver.quit()
-
-
-@cli.command()
-@click.argument("course_names", nargs=-1, required=False, type=click.Choice(dao.config_data))
-@click.option("--all", "-a", is_flag=True, help="Update assignment directories for all specified courses.")
-@click.option(
-    "--headless/--show", "-hl/-s", default=True, help="Start the browser in headless mode (no visible UI)."
-)
-@click.option(
-    "--verbose", "-v", is_flag=True, help="Print additional information during the download process."
-)
-def update(course_names, all, headless, verbose):
-    """Update one or more courses by downloading the latest assignments."""
-
-    scraper = create_scraper(headless, verbose)
-    all = True if not course_names else all
-    courses_to_iterate = dao.config_data if all else course_names
-
-    for name in courses_to_iterate:
-        course_ = dao.config_data[name]
-        scraper.update_directory(course_, name)
-    scraper.driver.quit()
 
 
 if __name__ == "__main__":

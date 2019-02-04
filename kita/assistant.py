@@ -110,25 +110,26 @@ class Assistant:
             click.echo("Assignments will be saved to '{}'".format(download_dir))
             return
         self.update_selected_courses(added_courses)
+        from tkinter import filedialog
+
         while self.choice and not self.confirm(
             "Are these all courses: {}?".format(self.selected), default=True
         ):
-            selection = self.show_select_folder_manually_dialog(self.choice, "Which courses are missing?")
-            self.show_assignments_save_location_dialog(selection)
-            added_courses.append(selection["course_key"].lower())
+            course_key = self.show_select_folder_manually_dialog(self.choice, "Which courses are missing?")
+            selected_path = filedialog.askdirectory()
+            self.show_assignments_save_location_dialog(course_key, selected_path)
+            added_courses.append(course_key.lower())
             self.update_selected_courses(added_courses)
 
     def update_selected_courses(self, added_courses):
         self.selected = ", ".join(course.upper() for course in added_courses)
         self.choice = ", ".join(key.upper() for key in self.dao.config_data.keys() if key not in added_courses)
 
-    def show_assignments_save_location_dialog(self, selection):
+    def show_assignments_save_location_dialog(self, course_key, selected_path):
         self.echo(
-            "{} assignments will be saved to '{}'.".format(
-                selection["course_key"].upper(), utils.reformat(selection["selected_path"])
-            )
+            "{} assignments will be saved to '{}'.".format(course_key.upper(), utils.reformat(selected_path))
         )
-        self.dao.config_data[selection["course_key"]]["path"] = selection["selected_path"]
+        self.dao.config_data[course_key]["path"] = selected_path
         self.dao.dump_config()
 
     def show_select_folder_manually_dialog(self, choice, prompt_msg):
@@ -138,7 +139,7 @@ class Assistant:
             self.echo("Error: invalid input")
             course_key = self.prompt("{} Choose from {}".format(prompt_msg, choice))
         self.echo("Choose a location for saving your {} courses:".format(course_key.upper()), is_prompt=True)
-        return {"course_key": course_key, "selected_path": filedialog.askdirectory()}
+        return course_key
 
     def create_download_folder(self, course_keys, root_path):
         """
