@@ -18,16 +18,6 @@ class Scraper:
     """Implements all webpage related commands such as downloading and moving assignments.
         Constructs a new Scraper and a WebDriverWait object with a default
         maximum waiting time of 10 seconds.
-
-    :param driver: The selenium webdriver to use.
-    :param download_path: The path where all Firefox downloads will be stored.
-            If the move flag is active, kita will look for the downloaded files
-            in this directory if the move_and_rename method is called later.
-    :type download_path: str
-    :param dst: The dictionary in user.yml specifiying the root_path used for
-            move_and_rename as well as the format specifying how all files should be renamed.
-    :type dst: dict
-
     """
 
     def __init__(self, driver, dao, verbose):
@@ -38,12 +28,7 @@ class Scraper:
         self.verbose = verbose
 
     def on_any_page(self):
-        """
-
-
-        :returns: Whether the selenium webdriver is currently on any webpage.
-
-        """
+        """Checks whether the selenium webdriver is currently on any webpage."""
         try:
             return not self.driver.current_url == "about:blank"
         except Exception:
@@ -65,22 +50,14 @@ class Scraper:
     def path_of(self, name):
         """Retrieves the xpath of the link with the specified name on the current webpage.
         Assumes that all assignment and folder HTML elements have the same format.
-
-        :param name: The link text to return the xpath of.
-        :type name: str
-        :returns: The xpath to the link specified by the name argument.
         """
         return "//a[text()='{}' and @class='il_ContainerItemTitle']".format(name)
 
     def click_link(self, name, new_tab=False):
         """Clicks on the link with the given text on ilias (either in a new tab or the current one).
 
-        :param name: The link text to search for.
-        :param new_tab: Whether to open the link in a new tab. Defaults to False.
-        :type new_tab: bool
         :raises TimeoutException: If the link with the given name could not be found
                 after a certain amount of time.
-
         """
 
         link = self.wait.until(EC.element_to_be_clickable((By.XPATH, self.path_of(name))))
@@ -109,13 +86,6 @@ class Scraper:
 
         The format attribute may contain an optional previous path name separated by
         a single '/', which will be moved to before downloading the assignment.
-
-        :param course: The course retrieved from config.yml to download.
-        :param assignment_num: The number of the assignment to download.
-        :type assignment_num: int
-        :returns: The name of the link of the downloaded assignment.
-        :rtype: str
-
         """
         link_format = course["assignment"]["link_format"]
         assignment = self.get_assignment_to_download(assignment_num, link_format)
@@ -154,12 +124,6 @@ class Scraper:
         number.
         Appends leading zeroes if the amount of consecutive $-signs is higher than
         the assignment number.
-
-        :param name: The name of the assignment to format. All $-signs will be replaced
-                by the assignment number and leading zeroes if necessary.
-        :param assignment_num: The number of the assignment to replace the $-signs.
-        :type assignment_num: int
-
         """
         num_digits = name.count("$")
         return name.replace("$" * num_digits, str(assignment_num).zfill(num_digits))
@@ -170,14 +134,6 @@ class Scraper:
         The external link must be specified as the link attribute in the config.yml file of the given course.
         Uses the assignment:format attribute in the config.yml file to determine the name of the link
         of the assignment to download.
-
-        :param course: The course retrieved from the config.yml file. Must include
-                a link attribute to specify the main url of the external site.
-        :param assignment_num: The number of the assignment to download.
-        :type assignment_num: int
-        :returns: The name of the link of the downloaded assignment.
-        :rtype: str
-
         """
         self.driver.get(course["link"])
         format = course["assignment"]["link_format"]
@@ -202,17 +158,6 @@ class Scraper:
 
         It will be renamed based on the destination/rename_format attribute
         specified in the user.yml file.
-
-        :param assignment: The name of the link text of the downloaded assignment.
-            By default, this method will search for a PDF file with this name.
-        :type assignment: str
-        :param course: The previously downloaded course retrieved from the config.yml
-            file. Specifies the (optional) file format of the assignment PDF and
-            the path to copy it to.
-        :type course: dict
-        :param assignment_num: The assignment number of the downloaded assignment file.
-        :type assignment_num: int
-
         """
         if not rename_format:
             rename_format = self.dao.user_data["destination"]["rename_format"]
@@ -231,11 +176,7 @@ class Scraper:
             shutil.move(src, dst_file)
 
     def get(self, course, assignment_num, move, rename_format=None):
-        """
-        :param course:
-        :param assignment_num:
-        :param move:
-        """
+        """        """
         assignment = None
         if "link" in course:
             assignment = self.download_from(course, assignment_num)
