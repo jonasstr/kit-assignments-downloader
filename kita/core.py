@@ -117,38 +117,37 @@ class Scraper:
         :rtype: str
 
         """
-        format = course["assignment"]["link_format"]
-        # Split (optional) path in format.
-        values = format.split("/")
-        # If the path has been specifed, the assignment is at [1]
-        assignment = values[0] if len(values) == 1 else values[1]
-        assignment = self.format_assignment_name(assignment, assignment_num)
+        link_format = course["assignment"]["link_format"]
+        assignment = self.get_assignment_to_download(assignment_num, link_format)
+        optional_path = self.get_optional_path(assignment_num, link_format)
+        self.perform_download_on_site(course, optional_path, assignment)
+        return assignment
 
-        path = ""
-        if len(values) == 2:
-            path = self.format_assignment_name(values[0], assignment_num)
-
-        # msg = self.msg("Downloading '{}' from {}".format(assignment, course['name']))
-        # silent_msg = "Updating LA: "
-        # logger = logger.ProgressLogger(assignment) if self.verbose else logger.SilentProgressLogger
-        # with logger.bar("Downloading '{}' from {}".format(assignment, course["name"]), show_done=True):
-
-        # print("Download")
+    def perform_download_on_site(self, course, optional_path, assignment):
         # Open the course page in a new tab (and switch to it as specified in firefox preferences).
         self.click_link(course["name"], True)
         self.switch_to_last_tab()
         # Click on the assignments folder.
         self.click_link(course["assignment"]["link_name"])
-        if path:
-            # Click on the additional folder (if specified).
-            self.click_link(path)
+        if optional_path:
+            self.click_link(optional_path)
         # Download the assigment.
         self.click_link(assignment)
         time.sleep(1)
         # Close this tab.
         self.driver.close()
         self.driver.switch_to.window(self.driver.window_handles[0])
-        return assignment
+
+    def get_assignment_to_download(self, assignment_num, format):
+        values = format.split("/")
+        # If the path has been specified, the assignment is at [1]
+        assignment = values[0] if len(values) == 1 else values[1]
+        return self.format_assignment_name(assignment, assignment_num)
+
+    def get_optional_path(self, assignment_num, format):
+        values = format.split("/")
+        if len(values) == 2:
+            return self.format_assignment_name(values[0], assignment_num)
 
     def format_assignment_name(self, name, assignment_num):
         """Formats the specified assignment name by replacing all $-signs with the assignment
@@ -242,8 +241,6 @@ class Scraper:
             assignment = self.download_from(course, assignment_num)
         else:
             if not self.on_any_page():
-                # msg = "Opening main page and logging in..\n"
-                # with logger.strict(msg, self.verbose):
                 if not self.to_home():
                     return False
             assignment = self.download(course, assignment_num)
@@ -254,44 +251,45 @@ class Scraper:
         return True
 
     def update_directory(self, course, course_name):
-        """
-
-        :param course:
-        :param course_name:
-        """
+        """s """
         course_dir = os.path.join(self.dao.user_data["destination"]["root_path"], course["path"])
         assignment_files = next(os.walk(course_dir))[2]
         rename_format = self.find_rename_format(assignment_files)
-        latest_assignment = self.latest_assignment(assignment_files, rename_format)
+        latest_assignment = self.get_latest_assignment(assignment_files, rename_format)
+        print(self.get_on_start_update_msg(course_name, latest_assignment, rename_format))
+        self.perform_update(course, course_name, latest_assignment, rename_format)
 
+    def get_on_start_update_msg(self, course_name, latest_assignment, rename_format):
         if latest_assignment > 0:
             assignment = self.format_assignment_name(rename_format, latest_assignment)
             if self.verbose:
-                print("Updating {} assignments, latest: {}".format(course_name.upper(), assignment + ".pdf"))
-        else:
-            if self.verbose:
-                print("No assignments found in {} directory, starting at 1.".format(course_name.upper()))
-        logger = (
+                return "Updating {} assignments, latest: {}".format(course_name.upper(), assignment + ".pdf")
+        elif self.verbose:
+            return "No assignments found in {} directory, starting at 1.".format(course_name.upper())
+
+    def get_specific_logger(self, course_name, rename_format):
+        return (
             ProgressLogger(course_name.upper(), rename_format)
             if self.verbose
             else SilentProgressLogger(course_name.upper())
         )
+
+    def perform_update(self, course, course_name, latest_assignment, rename_format):
         try:
-            with logger:
+            with self.get_specific_logger(course_name, rename_format) as logger:
                 while True:
                     logger.update(latest_assignment + 1)
                     if not self.get(course, latest_assignment + 1, True, rename_format):
-                        raise TimeoutException(
-                            "Login failed! Please run 'kita setup --user' "
-                            "and enter your correct username and password."
+                        raise LoginException(
+                            "Login failed! Use 'kita setup --user' and update username and password."
                         )
                     latest_assignment += 1
         except (IOError, OSError):
             print("Invalid destination path for this assignment!")
-        except TimeoutException as e:
+        except (TimeoutException, LoginException) as e:
             print(str(e).replace("Message: ", ""))
 
-    def latest_assignment(self, assignment_files, rename_format):
+    def get_latest_assignment(self, assignment_files, rename_format):
         """Finds the latest assignment in a list of assignment PDFs."""
         current_assignment = 0
         for assignment in assignment_files:
@@ -319,7 +317,6 @@ class Scraper:
         return detected_format if detected_format else self.dao.user_data["destination"]["rename_format"]
 
     def detect_format(self, assignment_files):
-
         for assignment in assignment_files:
             assignment = self.remove_extension(assignment)
             # If the file name ends with at least one digit replace them with $-signs to get the format.
@@ -329,3 +326,7 @@ class Scraper:
 
     def remove_extension(self, file_name):
         return file_name[:-4]
+
+
+class LoginException(Exception):
+    pass

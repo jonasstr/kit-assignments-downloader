@@ -9,7 +9,7 @@ class StaticLogger:
         print(self.msg)
 
     def __exit__(self, exc_type, exc_value, tb):
-        ...
+        pass
 
 
 class StrictStaticLogger(StaticLogger):
@@ -74,8 +74,12 @@ class SilentProgressLogger(BaseProgressLogger):
         self.latest_output = progress
 
     def __exit__(self, exc_type, exc_value, tb):
-        if exc_value is not None and self.prev_output is None:
+        from kita.core import LoginException
+
+        if exc_type is TimeoutException and self.prev_output is None:
             print("\rUpdating {}: already up to date.".format(self.course), flush=False, end="\n")
+        elif exc_type is LoginException:
+            print("\rUpdating {}, cancelled!".format(self.course), flush=False, end="\n")
         else:
             output = self.prev_output if self.prev_output else self.latest_output
             print("\rUpdating {}: {}, done.".format(self.course, output), flush=False, end="\n")
