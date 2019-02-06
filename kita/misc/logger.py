@@ -1,80 +1,85 @@
-from logging.handlers import RotatingFileHandler
 from selenium.common.exceptions import TimeoutException
 
-from kita.misc import utils
 
-
-class ProgressBar:
-    def __init__(self, message, silent=False, show_done=False):
-        self.silent = silent
-        if not self.silent:
-            self.output = "\r" + utils.reformat(message["verbose"])
-            self.done = ", done." if show_done else ""
-            print(self.output, end="", flush=True)
+class StaticLogger:
+    def __init__(self, msg):
+        self.msg = msg
 
     def __enter__(self):
-        pass
+        print(self.msg)
 
     def __exit__(self, exc_type, exc_value, tb):
-        if not self.silent:
-            if isinstance(exc_value, TimeoutException):
-                self.done = ", cancelled!"
-            print(self.done, end="\n", flush=False)
+        pass
 
 
-class StrictLogger:
-    def __init__(self, msg, verbose, show_done):
+class StrictStaticLogger(StaticLogger):
+    def __init__(self, msg, verbose):
+        super().__init__(msg)
         self.verbose = verbose
-        if self.verbose:
-            self.done = ", done" if show_done else ""
-            self.output = "\r" + utils.reformat(msg)
-            print(self.output, end="", flush=True)
 
     def __enter__(self):
-        pass
+        if self.verbose:
+            super().__enter__()
+
+
+def strict(msg, verbose):
+    return StrictStaticLogger(msg, verbose)
+
+
+class BaseProgressLogger:
+    def __enter__(self):
+        return self
+
+    def update(self, msg):
+        print("\r" + msg, end="", flush=True)
+
+
+class StateLogger(BaseProgressLogger):
+    def __init__(self, msg):
+        super().update(msg)
 
     def __exit__(self, exc_type, exc_value, tb):
         if isinstance(exc_value, TimeoutException):
-            self.done = ", cancelled!"
-        if self.verbose:
-            print(self.done, end="\n", flush=False)
+            print(", not found.", end="\n", flush=False)
+        else:
+            print(", done.", end="\n", flush=False)
 
 
-class BaseLogger:
-    def __init__(self, msg, verbose, show_done):
-        self.output = "\r" + utils.reformat(msg)
-        self.verbose = verbose
-        self.done = ", done" if show_done else ""
-        print(self.output, end="", flush=True)
+def state(msg):
+    return StateLogger(msg)
 
-    def __enter__(self):
-        pass
+
+class ProgressLogger(StateLogger):
+    def __init__(self, course, rename_format):
+        self.course = course
+        self.rename_format = rename_format
+
+    def update(self, progress):
+        num_digits = self.rename_format.count("$")
+        assignment = self.rename_format.replace("$" * num_digits, str(progress).zfill(num_digits))
+        super().update("Downloading '{}' from {}".format(assignment, self.course))
+
+
+class SilentProgressLogger(BaseProgressLogger):
+    def __init__(self, course):
+        self.course = course
+        self.prev_output = None
+        self.latest_output = None
+
+    def update(self, progress):
+        if self.latest_output:
+            progress = "{}, {}".format(self.latest_output, progress)
+            self.prev_output = self.latest_output
+        super().update("Updating {}: {}..".format(self.course, progress))
+        self.latest_output = progress
 
     def __exit__(self, exc_type, exc_value, tb):
-        if hasattr(self, "done"):
-            if isinstance(exc_value, TimeoutException):
-                self.done = ", cancelled!"
-            print(self.done, end="\n", flush=False)
+        from kita.core import LoginException
 
-
-class StrictLogger(BaseLogger):
-    def __init__(self, msg, verbose, show_done):
-        if verbose:
-            super().__init__(msg, verbose, show_done)
-
-
-class SilentLogger(BaseLogger):
-    def __init__(self, verbose_msg, silent_msg, verbose, show_done):
-        super().__init__(verbose_msg if verbose else silent_msg, verbose, show_done)
-
-
-def bar(message, silent=False, show_done=False):
-    return ProgressBar(message, silent, show_done)
-
-
-def strict(msg, verbose=False, show_done=False):
-    return StrictLogger(msg, verbose, show_done)
-
-
-def silent(verbose_msg, silent_msg, verbose=False, show_done=False):
-    return SilentLogger(verbose_msg, silent_msg, verbose, show_done)
+        if exc_type is TimeoutException and self.prev_output is None:
+            print("\rUpdating {}: already up to date.".format(self.course), flush=False, end="\n")
+        elif exc_type is LoginException:
+            print("\rUpdating {}, cancelled!".format(self.course), flush=False, end="\n")
+        else:
+            output = self.prev_output if self.prev_output else self.latest_output
+            print("\rUpdating {}: {}, done.".format(self.course, output), flush=False, end="\n")

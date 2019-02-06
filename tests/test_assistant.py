@@ -35,20 +35,20 @@ class TestAssistant(BaseUnitTest):
         folder_name = "Course Folder"
         sub_folders = ["Some subfolder", "/!\\ 234", "_doesnt__matter", "Übungen"]
         expected_path = os.path.join(folder_name, "Übungen")
-        self.assertEqual(self.assistant.found_assignments_sub_folder(folder_name, sub_folders), expected_path)
+        self.assertEqual(expected_path, self.assistant.found_assignments_sub_folder(folder_name, sub_folders))
 
     def test_assignments_sub_folder_substring(self):
         folder_name = "Course Folder"
         sub_folders = ["GBI-Übungen"]
         expected_path = os.path.join(folder_name, "GBI-Übungen")
-        self.assertEqual(self.assistant.found_assignments_sub_folder(folder_name, sub_folders), expected_path)
+        self.assertEqual(expected_path, self.assistant.found_assignments_sub_folder(folder_name, sub_folders))
 
     def test_kit_folder_no_subfolders(self):
         folder_name = "Programmieren"
         sub_folders = ["Irrelevant subfolders", "", "somefile.txt"]
         expected_result = {"course_key": "prg", "folder_name": "Programmieren"}
         self.assertEqual(
-            self.assistant.search_for_assignments_folder(folder_name, sub_folders), expected_result
+            expected_result, self.assistant.search_for_assignments_folder(folder_name, sub_folders)
         )
 
     def test_kit_folder_with_subfolders(self):
@@ -56,7 +56,7 @@ class TestAssistant(BaseUnitTest):
         sub_folders = ["Some folder", "", "somefile.txt", "Übungen"]
         expected_result = {"course_key": "prg", "folder_name": os.path.join("Programmieren", "Übungen")}
         self.assertEqual(
-            self.assistant.search_for_assignments_folder(course_folder, sub_folders), expected_result
+            expected_result, self.assistant.search_for_assignments_folder(course_folder, sub_folders)
         )
 
     def test_kit_folder_long_path_name_with_subfolders(self):
@@ -67,7 +67,7 @@ class TestAssistant(BaseUnitTest):
             "folder_name": os.path.join("Höhere Mathematik 1", "Übungsblätter"),
         }
         self.assertEqual(
-            self.assistant.search_for_assignments_folder(course_folder, sub_folders), expected_result
+            expected_result, self.assistant.search_for_assignments_folder(course_folder, sub_folders)
         )
 
     def test_create_empty_download_folder(self):

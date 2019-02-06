@@ -22,7 +22,9 @@ class Assistant:
         click.echo(color + text)
 
     def prompt(self, text):
-        """Forwards the given text to click.echo() and adds cyan color and a '>' symbol to the start of the string."""
+        """Forwards the given text to click.echo() and adds cyan color and a '>' symbol
+        to the start of the string.
+        """
         return click.prompt(Fore.CYAN + "> " + text)
 
     def confirm(self, text, default=False):
@@ -32,9 +34,11 @@ class Assistant:
         )
 
     def setup_user(self):
-        """Starts the setup assistant for setting up the user.yml file.    
+        """Starts the setup assistant for setting up the user.yml file.
         Saves the login credentials of the user and the root path for downloading assignments.
         """
+        from tkinter import filedialog
+
         # user.yml already exists.
         if os.path.isfile(self.dao.user_yml_path):
             if not self.confirm("Kita is already set up. Overwrite existing config?"):
@@ -68,11 +72,11 @@ class Assistant:
         """Starts the setup assistant for setting up the config.yml file."""
         if os.path.isfile(self.dao.user_yml_path):
             self.dao.load_user()
-
             root_path = self.dao.user_data["destination"]["root_path"]
             if not os.path.isdir(root_path):
                 self.echo(
-                    "\nKita has not been configured correctly (root_path not found).\nUse 'kita setup --user' instead."
+                    "\nKita has not been configured correctly (root_path not found).\n"
+                    "Use 'kita setup --user' instead."
                 )
                 return False
 
@@ -106,25 +110,26 @@ class Assistant:
             click.echo("Assignments will be saved to '{}'".format(download_dir))
             return
         self.update_selected_courses(added_courses)
+        from tkinter import filedialog
+
         while self.choice and not self.confirm(
             "Are these all courses: {}?".format(self.selected), default=True
         ):
-            selection = self.show_select_folder_manually_dialog(self.choice, "Which courses are missing?")
-            self.show_assignments_save_location_dialog(selection)
-            added_courses.append(selection["course_key"].lower())
+            course_key = self.show_select_folder_manually_dialog(self.choice, "Which courses are missing?")
+            selected_path = filedialog.askdirectory()
+            self.show_assignments_save_location_dialog(course_key, selected_path)
+            added_courses.append(course_key.lower())
             self.update_selected_courses(added_courses)
 
     def update_selected_courses(self, added_courses):
         self.selected = ", ".join(course.upper() for course in added_courses)
         self.choice = ", ".join(key.upper() for key in self.dao.config_data.keys() if key not in added_courses)
 
-    def show_assignments_save_location_dialog(self, selection):
+    def show_assignments_save_location_dialog(self, course_key, selected_path):
         self.echo(
-            "{} assignments will be saved to '{}'.".format(
-                selection["course_key"].upper(), utils.reformat(selection["selected_path"])
-            )
+            "{} assignments will be saved to '{}'.".format(course_key.upper(), utils.reformat(selected_path))
         )
-        self.dao.config_data[selection["course_key"]]["path"] = selection["selected_path"]
+        self.dao.config_data[course_key]["path"] = selected_path
         self.dao.dump_config()
 
     def show_select_folder_manually_dialog(self, choice, prompt_msg):
@@ -134,12 +139,12 @@ class Assistant:
             self.echo("Error: invalid input")
             course_key = self.prompt("{} Choose from {}".format(prompt_msg, choice))
         self.echo("Choose a location for saving your {} courses:".format(course_key.upper()), is_prompt=True)
-        return {"course_key": course_key, "selected_path": filedialog.askdirectory()}
+        return course_key
 
     def create_download_folder(self, course_keys, root_path):
         """
-        :param course_keys: 
-        :param root_path: 
+        :param course_keys:
+        :param root_path:
         """
         download_dir = os.path.join(root_path, "Downloads")
         os.makedirs(download_dir, exist_ok=True)
