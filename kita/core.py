@@ -3,14 +3,15 @@ import re
 import shutil
 import time
 
+from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.common.keys import Keys
 
-from kita.misc import logger
+from kita.misc import logger, utils
 from kita.misc.logger import ProgressLogger, SilentProgressLogger
 
 
@@ -73,7 +74,7 @@ class Scraper:
         # Wait until the site has loaded.
         tabs_before = len(self.driver.window_handles)
         while len(self.driver.window_handles) == tabs_before:
-            time.sleep(0.2)
+            time.sleep(0.1)
         # Switch to the new tab.
         self.driver.switch_to.window(self.driver.window_handles[-1])
 
@@ -120,8 +121,7 @@ class Scraper:
             return self.format_assignment_name(values[0], assignment_num)
 
     def format_assignment_name(self, name, assignment_num):
-        """Formats the specified assignment name by replacing all $-signs with the assignment
-        number.
+        """Formats the specified assignment name by replacing all $-signs with the assignment number.
         Appends leading zeroes if the amount of consecutive $-signs is higher than
         the assignment number.
         """
@@ -139,7 +139,7 @@ class Scraper:
         format = course["assignment"]["link_format"]
         assignment = self.format_assignment_name(format, assignment_num)
 
-        msg = "Downloading '{}' from {}".format(assignment, course["name"])
+        msg = "Downloading '{}' from {}".format(assignment, utils.reformat(course["name"]))
         with logger.state(msg):
             self.driver.find_element_by_link_text(assignment).click()
             time.sleep(1)
@@ -197,15 +197,15 @@ class Scraper:
         assignment_files = next(os.walk(course_dir))[2]
         rename_format = self.find_rename_format(assignment_files)
         latest_assignment = self.get_latest_assignment(assignment_files, rename_format)
-        print(self.get_on_start_update_msg(course_name, latest_assignment, rename_format))
+        if self.verbose:
+            print(self.get_on_start_update_msg(course_name, latest_assignment, rename_format))
         self.perform_update(course, course_name, latest_assignment, rename_format)
 
     def get_on_start_update_msg(self, course_name, latest_assignment, rename_format):
         if latest_assignment > 0:
             assignment = self.format_assignment_name(rename_format, latest_assignment)
-            if self.verbose:
-                return "Updating {} assignments, latest: {}".format(course_name.upper(), assignment + ".pdf")
-        elif self.verbose:
+            return "Updating {} assignments, latest: {}".format(course_name.upper(), assignment + ".pdf")
+        else:
             return "No assignments found in {} directory, starting at 1.".format(course_name.upper())
 
     def get_specific_logger(self, course_name, rename_format):
@@ -227,8 +227,8 @@ class Scraper:
                     latest_assignment += 1
         except (IOError, OSError):
             print("Invalid destination path for this assignment!")
-        except (TimeoutException, LoginException) as e:
-            print(str(e).replace("Message: ", ""))
+        except (TimeoutException, NoSuchElementException, LoginException) as e:
+            print(str(e).replace("Message: ", "Error: "))
 
     def get_latest_assignment(self, assignment_files, rename_format):
         """Finds the latest assignment in a list of assignment PDFs."""
