@@ -139,11 +139,9 @@ class Scraper:
         format = course["assignment"]["link_format"]
         assignment = self.format_assignment_name(format, assignment_num)
 
-        msg = "Downloading '{}' from {}".format(assignment, utils.reformat(course["name"]))
-        with logger.state(msg):
-            self.driver.find_element_by_link_text(assignment).click()
-            time.sleep(1)
-            return assignment
+        self.driver.find_element_by_link_text(assignment).click()
+        time.sleep(1)
+        return assignment
 
     def move_and_rename(self, assignment, course, assignment_num, rename_format):
         """Moves and renames a downloaded assignment PDF to the specified destination folder.
@@ -228,7 +226,8 @@ class Scraper:
         except (IOError, OSError):
             print("Invalid destination path for this assignment!")
         except (TimeoutException, NoSuchElementException, LoginException) as e:
-            print(str(e).replace("Message: ", "Error: "))
+            pass  # if not str(e).endswith("Message: ", ""):
+            #    print(str(e).replace("Message: ", "Error: "))
 
     def get_latest_assignment(self, assignment_files, rename_format):
         """Finds the latest assignment in a list of assignment PDFs."""
