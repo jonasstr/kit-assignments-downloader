@@ -28,10 +28,10 @@ class Scraper:
         self.dao = dao
         self.verbose = verbose
 
-    def on_any_page(self):
+    def on_ilias_page(self):
         """Checks whether the selenium webdriver is currently on any webpage."""
         try:
-            return not self.driver.current_url == "about:blank"
+            return self.driver.current_url.startswith("https://ilias.studium.kit.edu")
         except Exception:
             return False
 
@@ -169,8 +169,8 @@ class Scraper:
             dst_folder, self.format_assignment_name(rename_format, assignment_num) + ".pdf"
         )
 
-        msg = "Moving to {}".format(dst_folder)
-        with logger.state(msg):
+        msg = "\nMoving to {}".format(dst_folder)
+        with logger.strict(msg, self.verbose):
             shutil.move(src, dst_file)
 
     def get(self, course, assignment_num, move, rename_format=None):
@@ -179,7 +179,7 @@ class Scraper:
         if "link" in course:
             assignment = self.download_from(course, assignment_num)
         else:
-            if not self.on_any_page():
+            if not self.on_ilias_page():
                 if not self.to_home():
                     return False
             assignment = self.download(course, assignment_num)
@@ -196,7 +196,11 @@ class Scraper:
         rename_format = self.find_rename_format(assignment_files)
         latest_assignment = self.get_latest_assignment(assignment_files, rename_format)
         if self.verbose:
-            print(self.get_on_start_update_msg(course_name, latest_assignment, rename_format))
+            print(
+                self.get_on_start_update_msg(course_name, latest_assignment, rename_format),
+                flush=False,
+                end="\n",
+            )
         self.perform_update(course, course_name, latest_assignment, rename_format)
 
     def get_on_start_update_msg(self, course_name, latest_assignment, rename_format):
