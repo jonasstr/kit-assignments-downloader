@@ -10,11 +10,11 @@ from selenium.webdriver.firefox.options import Options
 import tkinter as tk
 
 from kita import core
-from kita.dao import Dao
 from kita.assistant import Assistant
+from kita.dao import Dao
 import kita.misc.utils as utils
 
-gecko_path = os.path.join(Path(__file__).resolve().parents[1], "geckodriver")
+gecko_path = os.path.join(Path(__file__).resolve().parents[1], "geckodriver.exe")
 user_yml_path = os.path.join(click.get_app_dir("kita"), "user.yml")
 config_yml_path = os.path.join(Path(__file__).parents[0], "config.yml")
 

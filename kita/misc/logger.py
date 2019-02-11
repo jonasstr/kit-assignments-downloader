@@ -1,3 +1,4 @@
+from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import TimeoutException
 
 
@@ -76,7 +77,7 @@ class SilentProgressLogger(BaseProgressLogger):
     def __exit__(self, exc_type, exc_value, tb):
         from kita.core import LoginException
 
-        if exc_type is TimeoutException and self.prev_output is None:
+        if exc_type in (TimeoutException, NoSuchElementException) and self.prev_output is None:
             print("\rUpdating {}: already up to date.".format(self.course), flush=False, end="\n")
         elif exc_type is LoginException:
             print("\rUpdating {}, cancelled!".format(self.course), flush=False, end="\n")
