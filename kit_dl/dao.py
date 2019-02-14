@@ -44,7 +44,7 @@ class Dao:
         """Loads the user.yml and config.yml files."""
         self.user_data = self.try_load_file(
             self.user_yml_path,
-            error_msg="Error, cannot find user.yml. \n" "Use 'kita setup' before downloading assignments.",
+            error_msg="Error, cannot find user.yml. \n" "Use 'kit-dl setup' before downloading assignments.",
         )
         self.config_data = self.try_load_file(self.config_yml_path, error_msg="Error, cannot find config.yml.")
 
@@ -58,7 +58,7 @@ class Dao:
     def load_user(self):
         self.user_data = self.try_load_file(
             self.user_yml_path,
-            error_msg="Error, cannot find user.yml. \n" "Use 'kita setup' before downloading assignments.",
+            error_msg="Error, cannot find user.yml. \n" "Use 'kit-dl setup' before downloading assignments.",
         )
 
     def load_config(self):

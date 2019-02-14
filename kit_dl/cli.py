@@ -9,13 +9,13 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import tkinter as tk
 
-from kita import core
-from kita.assistant import Assistant
-from kita.dao import Dao
-import kita.misc.utils as utils
+from kit_dl import core
+from kit_dl.assistant import Assistant
+from kit_dl.dao import Dao
+import kit_dl.misc.utils as utils
 
 gecko_path = os.path.join(Path(__file__).resolve().parents[1], "geckodriver.exe")
-user_yml_path = os.path.join(click.get_app_dir("kita"), "user.yml")
+user_yml_path = os.path.join(click.get_app_dir("kit-dl"), "user.yml")
 config_yml_path = os.path.join(Path(__file__).parents[0], "config.yml")
 
 yaml = YAML(typ="rt")
@@ -58,13 +58,13 @@ def cli(ctx):
     """Thank you for using the KIT Assignments Downloader!
 
     In order to download assignments make sure the setup was successful
-    (otherwise run 'kita setup' again).\n
-    To get started, just use the 'kita update la' command
+    (otherwise run 'kit-dl setup' again).\n
+    To get started, just use the 'kit-dl update la' command
     where 'la' is one of your courses.\n
     If you only want to download a specific assignment, use
-    'kita get la 9' where '9' is the assignment number.\n
+    'kit-dl get la 9' where '9' is the assignment number.\n
     In case the download isn't working or you encounter any
-    bugs/crashes please visit github.com/jonasstr/kita and
+    bugs/crashes please visit github.com/jonasstr/kit-dl and
     create an issue or contact me via email: uzxhf@student.kit.edu.
     """
     if str(ctx.invoked_subcommand) != "setup":
@@ -77,7 +77,7 @@ def setup_incorrectly(file_name, path):
     if not os.path.isfile(path):
         click.echo(
             "\nKita has not been configured correctly ({} not found)."
-            "\nUse 'kita setup' before downloading assignments.".format(file_name)
+            "\nUse 'kit-dl setup' before downloading assignments.".format(file_name)
         )
         return True
 
@@ -102,7 +102,7 @@ def setup(config, user):
         if not assistant.setup_config():
             click.echo("Setup cancelled.")
             return
-    click.echo("\nSetup successful. Type 'kita --help' for details.")
+    click.echo("\nSetup successful. Type 'kit-dl --help' for details.")
 
 
 @cli.command()
@@ -113,7 +113,7 @@ def setup(config, user):
     "-mv/-kp",
     default=True,
     help="Move the downloaded assignments to their course directory"
-    " (same as 'kita update') or keep them in the browser's download directory (default: move).",
+    " (same as 'kit-dl update') or keep them in the browser's download directory (default: move).",
 )
 @click.option("--all", "-a", is_flag=True, help="Download assignments from all specified courses.")
 @click.option(
@@ -189,7 +189,7 @@ def create_scraper(headless, verbose):
 
 
 def get_options():
-    """Creates Firefox options for running kita in headless mode."""
+    """Creates Firefox options for running kit-dl in headless mode."""
     options = Options()
     options.headless = True
     return options

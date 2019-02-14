@@ -4,7 +4,7 @@ from colorama import Fore, Style
 from colorama import init
 import click
 
-import kita.misc.utils as utils
+import kit_dl.misc.utils as utils
 
 
 class Assistant:
@@ -76,7 +76,7 @@ class Assistant:
             if not os.path.isdir(root_path):
                 self.echo(
                     "\nKita has not been configured correctly (root_path not found).\n"
-                    "Use 'kita setup --user' instead."
+                    "Use 'kit-dl setup --user' instead."
                 )
                 return False
 

@@ -15,5 +15,5 @@ exclude = '''
   | dist
   | tests/data
   | env
-  | kita.egg-info
+  | kit-dl.egg-info
 )/
