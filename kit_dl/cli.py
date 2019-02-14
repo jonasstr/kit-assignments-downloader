@@ -9,10 +9,10 @@ from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
 import tkinter as tk
 
-from kit-dl import core
-from kit-dl.assistant import Assistant
-from kit-dl.dao import Dao
-import kit-dl.misc.utils as utils
+from kit_dl import core
+from kit_dl.assistant import Assistant
+from kit_dl.dao import Dao
+import kit_dl.misc.utils as utils
 
 gecko_path = os.path.join(Path(__file__).resolve().parents[1], "geckodriver.exe")
 user_yml_path = os.path.join(click.get_app_dir("kit-dl"), "user.yml")

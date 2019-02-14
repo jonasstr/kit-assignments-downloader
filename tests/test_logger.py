@@ -2,7 +2,7 @@ import unittest.mock as mock
 
 from selenium.common.exceptions import TimeoutException
 
-from kit-dl.misc.logger import ProgressLogger, SilentProgressLogger
+from kit_dl.misc.logger import ProgressLogger, SilentProgressLogger
 from tests.base import BaseUnitTest
 
 

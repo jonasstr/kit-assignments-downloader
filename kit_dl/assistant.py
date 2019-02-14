@@ -4,7 +4,7 @@ from colorama import Fore, Style
 from colorama import init
 import click
 
-import kit-dl.misc.utils as utils
+import kit_dl.misc.utils as utils
 
 
 class Assistant:
