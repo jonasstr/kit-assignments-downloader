@@ -11,8 +11,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from kita.misc import logger, utils
-from kita.misc.logger import ProgressLogger, SilentProgressLogger
+from kit-dl.misc import logger, utils
+from kit-dl.misc.logger import ProgressLogger, SilentProgressLogger
 
 
 class Scraper:
@@ -224,7 +224,7 @@ class Scraper:
                     logger.update(latest_assignment + 1)
                     if not self.get(course, latest_assignment + 1, True, rename_format):
                         raise LoginException(
-                            "Login failed! Use 'kita setup --user' and update username and password."
+                            "Login failed! Use 'kit-dl setup --user' and update username and password."
                         )
                     latest_assignment += 1
         except (IOError, OSError):

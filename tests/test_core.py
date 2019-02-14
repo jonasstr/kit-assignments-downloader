@@ -1,4 +1,4 @@
-from kita.core import Scraper
+from kit-dl.core import Scraper
 from tests.base import BaseUnitTest
 
 

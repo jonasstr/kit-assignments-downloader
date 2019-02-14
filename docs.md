@@ -4,27 +4,27 @@
 
 Show the help message (can be used together with a command):
 ```
-kita --help
+kit-dl --help
 ```
 Show general information about the current user and courses:
 ```
-kita --info
+kit-dl --info
 ```
 
 ## Commands
 
 ### Setup
 Start the command line based setup assistant or change previous settings.  
-Usage: `kita setup [OPTIONS]`  
+Usage: `kit-dl setup [OPTIONS]`  
 
 | Option           |  Description                                                                                                                                                                             
 |------------------|--------------------------------------------------------------------------------------------------------------|
-| `-cf`, `--config` | Allows you to change the download locations for your courses (updates the config.yml file). Note: This can only be used if `kita setup` or `kita setup --user` was used before.                                                              |
+| `-cf`, `--config` | Allows you to change the download locations for your courses (updates the config.yml file). Note: This can only be used if `kit-dl setup` or `kit-dl setup --user` was used before.                                                              |
 | `-u`, `--user`    | Change user specific settings such as the ilias user name and password or the root path for downloading                                                                                                                     assignments (updates the user.yml file).                                                                                       |
 
 ### Update
 Update one or more courses by downloading the latest assignments.  
-Usage: `kita update [OPTIONS] [COURSE_NAMES]...`
+Usage: `kit-dl update [OPTIONS] [COURSE_NAMES]...`
 
 | Option           |  Description                                                                                                                                                                             
 |------------------|--------------------------------------------------------------------------------------------------------------|
@@ -33,7 +33,7 @@ Usage: `kita update [OPTIONS] [COURSE_NAMES]...`
 
 ### Get
 Download one or more assignments from your courses (specified during setup) with the given assignment number(s).  
-Usage: `kita get [OPTIONS] [COURSE_NAMES]... ASSIGNMENT_NUM`
+Usage: `kit-dl get [OPTIONS] [COURSE_NAMES]... ASSIGNMENT_NUM`
 
 `ASSIGNMENT_NUM` can be specified in different ways:  
 * a single assignment: `a`

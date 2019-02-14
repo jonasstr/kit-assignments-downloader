@@ -1,6 +1,6 @@
 import os
 
-from kita.assistant import Assistant
+from kit-dl.assistant import Assistant
 from tests.base import BaseUnitTest
 
 

@@ -6,7 +6,7 @@ import unittest
 
 from ruamel.yaml import YAML
 
-from kita.dao import Dao
+from kit-dl.dao import Dao
 
 
 def create_dao(yaml):

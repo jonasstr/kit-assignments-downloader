@@ -7,7 +7,7 @@ An unofficial assignments downloader for [ilias.studium.kit.edu](http://ilias.st
 
 ## Why do I need this?
 
-With kita, keeping your assignments up to date has become a thing of the past.  
+With kit-dl, keeping your assignments up to date has become a thing of the past.  
 Kita automatically logs in to your ilias account, downloads the latest assignment of all your classes and moves them to the correct folders in your KIT directory - with just one command.
 
 *Contents*: **[Requirements](#requirements)** | **[Installation and setup](#installation-and-setup)** | **[Getting started](#getting-started)** | **[Supported courses](#supported-courses)** | **[Documentation](#documentation)** | **[Adding new courses](#adding-new-courses)** | **[License](#license)**
@@ -22,11 +22,11 @@ Make sure [Python 3](https://www.python.org/downloads/) (including pip and tkint
  
 To install this package open a console and type:
 
-    pip install kita
+    pip install kit-dl
   
 To complete the installation use the following command:
 
-    kita setup      
+    kit-dl setup      
 Note: The setup assistant requires you to input your ilias user name and password which will be stored locally in a file called user.yml. **Do not share this file!**
 
 ## Getting started
@@ -35,24 +35,24 @@ After the setup is complete, you can start downloading assignments. Type `-h` or
 
 Download the latest assignments for all your courses:
 ```
-kita update
+kit-dl update
 ```
 ---
 You can also update one or more specific courses:
 ```
-kita update [COURSE_NAMES]...
+kit-dl update [COURSE_NAMES]...
 ```
-**Example:** `kita update la gbi`  
+**Example:** `kit-dl update la gbi`  
 Update your 'Lineare Algebra I' and 'Grundbegriffe der Informatik' assignments.
 
 ---
 If you only want to download specific assignments you can use:
 ```
-kita get [COURSE_NAMES]... ASSIGNMENT_NUM
+kit-dl get [COURSE_NAMES]... ASSIGNMENT_NUM
 ```
-**Example:** `kita get la gbi 12`  
+**Example:** `kit-dl get la gbi 12`  
 Download the assignment #12 from both 'Lineare Algebra I' and 'Grundbegriffe der Informatik'.  
-**Example:** `kita get la gbi 10-12` or `kita get la gbi 10,11,12`  
+**Example:** `kit-dl get la gbi 10-12` or `kit-dl get la gbi 10,11,12`  
 Download the assignments #10 to #12.
   
  ## Supported courses
@@ -69,7 +69,7 @@ Download the assignments #10 to #12.
  
 If you can't find a specific course in the list above, use the following command:
 ```
-kita add
+kit-dl add
 ``` 
 which will guide you through adding your own courses. Please consider [contributing]() your newly created courses so that others will be able to download assignments for them as well. 
 

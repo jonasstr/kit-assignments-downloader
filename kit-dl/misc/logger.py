@@ -75,7 +75,7 @@ class SilentProgressLogger(BaseProgressLogger):
         self.latest_output = progress
 
     def __exit__(self, exc_type, exc_value, tb):
-        from kita.core import LoginException
+        from kit-dl.core import LoginException
 
         if exc_type in (TimeoutException, NoSuchElementException) and self.prev_output is None:
             print("\rUpdating {}: already up to date.".format(self.course), flush=False, end="\n")
