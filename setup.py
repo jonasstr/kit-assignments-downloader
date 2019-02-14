@@ -16,7 +16,7 @@ setup(
     author="Jonas Strittmatter",
     author_email="uzxhf@student.kit.edu",
     classifiers=[
-        "Development Status :: 3 - ALPHA",
+        "Development Status :: 3 - Alpha",
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3.6",
@@ -28,5 +28,5 @@ setup(
     test_suite="tests",
     include_package_data=True,
     install_requires=["click", "colorama", "ruamel.yaml>0.15", "selenium>=3"],
-    entry_points={"console_scripts": ["kit-dl=kit-dl.cli:cli"]},
+    entry_points={"console_scripts": ["kit-dl=kit_dl.cli:cli"]},
 )
