@@ -1,4 +1,3 @@
-import io
 import os
 from pathlib import Path
 import shutil
@@ -11,7 +10,12 @@ from kit_dl.dao import Dao
 
 def create_dao(yaml):
     gecko_path = os.path.join(Path(__file__).parents[1], "geckodriver.exe")
-    dao = Dao(gecko_path, "data/mock_user.yml", "data/mock_config.yml", yaml)
+    dao = Dao(
+        gecko_path,
+        os.path.join(os.path.join(os.path.dirname(__file__), "data", "mock_user.yml")),
+        os.path.join(os.path.dirname(__file__), "data", "mock_config.yml"),
+        yaml,
+    )
     return dao
 
 
