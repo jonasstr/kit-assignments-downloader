@@ -8,7 +8,8 @@ An unofficial assignments downloader for [ilias.studium.kit.edu](http://ilias.st
 With kit-dl, keeping your assignments up to date has become a thing of the past.  
 Kita automatically logs in to your ilias account, downloads the latest assignment of all your classes and moves them to the correct folders in your KIT directory - with just one command.
 
-*Contents*: **[Requirements](#requirements)** | **[Installation and setup](#installation-and-setup)** | **[Getting started](#getting-started)** | **[Supported courses](#supported-courses)** | **[Documentation](#documentation)** | **[Adding new courses](#adding-new-courses)** | **[License](#license)**
+*Contents*:  
+**[Requirements](#requirements)** | **[Installation and setup](#installation-and-setup)** | **[Getting started](#getting-started)** | **[Supported courses](#supported-courses)** | **[Documentation](#documentation)** | **[Adding new courses](#adding-new-courses)** | **[License](#license)**
 
 ## Requirements
 Platform: **Windows**   
@@ -61,15 +62,12 @@ Download the assignments #10 to #12.
  * PRG: Programmieren
  
  ## Documentation
- See full [documentation](https://github.com/jonasstr/scripts/blob/master/docs.md).
+ See full [documentation](https://github.com/jonasstr/kit-assignments-downloader/blob/master/docs.md).
   
  ## Adding new courses
  
-If you can't find a specific course in the list above, use the following command:
-```
-kit-dl add
-``` 
-which will guide you through adding your own courses. Please consider [contributing]() your newly created courses so that others will be able to download assignments for them as well. 
+If you can't find a specific course in the list above, feel free to open a pull request.  
+A command line assistant similar to `setup` is currently a planned feature.
 
 ## License
-[MIT](https://github.com/jonasstr/scripts/blob/master/LICENSE)
+[MIT](https://github.com/jonasstr/kit-assignments-downloader/blob/master/LICENSE)
