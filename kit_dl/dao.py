@@ -36,7 +36,6 @@ class Dao:
             with open(path, "rb") as file:
                 return self.yaml.load(file)
         except Exception:
-            raise
             if error_msg:
                 click.echo(error_msg)
 

@@ -1,3 +1,4 @@
+import getpass
 import os
 
 from colorama import Fore, Style
@@ -45,13 +46,13 @@ class Assistant:
                 return False
 
         self.echo(
-            "\nWelcome to the Kita 1.0.0 setup utility.\n\nPlease enter values for the following "
+            "\nWelcome to the kit-dl setup utility.\n\nPlease enter values for the following "
             "settings (just press Enter to\naccept a default value, if one is given in brackets).\n"
         )
 
         data = {}
         data["user_name"] = self.prompt("Enter your correct ilias user name").strip()
-        data["password"] = self.prompt("Enter your ilias password").strip()
+        data["password"] = self.select_password()
         self.echo(
             "\nChoose a location for saving your assignments. If you already\n"
             "downloaded assignments manually please choose your KIT folder\nfor auto-detection."
@@ -67,6 +68,13 @@ class Assistant:
 
         self.echo("Saved root folder '{}'.".format(utils.reformat(root_path)))
         return True
+
+    def select_password(self):
+        password = getpass.getpass("> Enter your ilias password: ").strip()
+        while getpass.getpass("> Please confirm the password: ").strip() != password:
+            self.echo("The passwords do not match." + Fore.CYAN)
+            password = getpass.getpass("> Enter your ilias password: ").strip()
+        return password
 
     def setup_config(self):
         """Starts the setup assistant for setting up the config.yml file."""

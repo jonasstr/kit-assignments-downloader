@@ -15,7 +15,7 @@ from kit_dl.dao import Dao
 import kit_dl.misc.utils as utils
 
 gecko_path = os.path.join(Path(__file__).resolve().parents[1], "geckodriver.exe")
-user_yml_path = os.path.join(click.get_app_dir("kit-dl"), "user.yml")
+user_yml_path = os.path.join(click.get_app_dir("kit_dl"), "user.yml")
 config_yml_path = os.path.join(Path(__file__).parents[0], "config.yml")
 
 yaml = YAML(typ="rt")
@@ -24,7 +24,6 @@ yaml.compact(seq_seq=False, seq_map=False)
 
 # Create data access object and load data on startup.
 dao = Dao(gecko_path, user_yml_path, config_yml_path, yaml)
-dao.load_data(suppress_access_errors=True)
 
 
 def print_info(ctx, param, value):
@@ -67,16 +66,18 @@ def cli(ctx):
     bugs/crashes please visit github.com/jonasstr/kit-dl and
     create an issue or contact me via email: uzxhf@student.kit.edu.
     """
-    if str(ctx.invoked_subcommand) != "setup":
+    if str(ctx.invoked_subcommand) != "setup" or not "show":
         # Make sure user.py has been created and config.yml exists.
         if setup_incorrectly("user.yml", user_yml_path) or setup_incorrectly("config.yml", config_yml_path):
             sys.exit(1)
+        else:
+            dao.load_data(suppress_access_errors=True)
 
 
 def setup_incorrectly(file_name, path):
     if not os.path.isfile(path):
         click.echo(
-            "\nKita has not been configured correctly ({} not found)."
+            "\nKit-dl has not been configured correctly ({} not found)."
             "\nUse 'kit-dl setup' before downloading assignments.".format(file_name)
         )
         return True
@@ -231,6 +232,12 @@ def create_profile():
     # Move directly to newly opened tab
     profile.set_preference("browser.tabs.loadInBackground", False)
     return profile
+
+
+@cli.command()
+@click.password_option()
+def show(password):
+    click.echo("PW=" + password)
 
 
 if __name__ == "__main__":
