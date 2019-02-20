@@ -63,10 +63,10 @@ def cli(ctx):
     If you only want to download a specific assignment, use
     'kit-dl get la 9' where '9' is the assignment number.\n
     In case the download isn't working or you encounter any
-    bugs/crashes please visit github.com/jonasstr/kit-dl and
-    create an issue or contact me via email: uzxhf@student.kit.edu.
+    bugs/crashes please visit github.com/jonasstr/kit-assignments-downloader
+    and create an issue or contact me via email: uzxhf@student.kit.edu.
     """
-    if str(ctx.invoked_subcommand) != "setup" or not "show":
+    if str(ctx.invoked_subcommand) != "setup":
         # Make sure user.py has been created and config.yml exists.
         if setup_incorrectly("user.yml", user_yml_path) or setup_incorrectly("config.yml", config_yml_path):
             sys.exit(1)
@@ -232,12 +232,6 @@ def create_profile():
     # Move directly to newly opened tab
     profile.set_preference("browser.tabs.loadInBackground", False)
     return profile
-
-
-@cli.command()
-@click.password_option()
-def show(password):
-    click.echo("PW=" + password)
 
 
 if __name__ == "__main__":

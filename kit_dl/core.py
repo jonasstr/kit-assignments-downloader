@@ -11,6 +11,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
+from kit_dl.misc import logger
 from kit_dl.misc.logger import ProgressLogger, SilentProgressLogger
 
 
@@ -173,7 +174,6 @@ class Scraper:
             shutil.move(src, dst_file)
 
     def get(self, course, assignment_num, move, rename_format=None):
-        """        """
         assignment = None
         if "link" in course:
             assignment = self.download_from(course, assignment_num)
@@ -189,7 +189,7 @@ class Scraper:
         return True
 
     def update_directory(self, course, course_name):
-        """s """
+        """Downloads the latest assignments for the given course."""
         course_dir = os.path.join(self.dao.user_data["destination"]["root_path"], course["path"])
         assignment_files = next(os.walk(course_dir))[2]
         rename_format = self.find_rename_format(assignment_files)
@@ -203,6 +203,7 @@ class Scraper:
         self.perform_update(course, course_name, latest_assignment, rename_format)
 
     def get_on_start_update_msg(self, course_name, latest_assignment, rename_format):
+        """Returns the start message that will be printed during update."""
         if latest_assignment > 0:
             assignment = self.format_assignment_name(rename_format, latest_assignment)
             return "Updating {} assignments, latest: {}".format(course_name.upper(), assignment + ".pdf")
@@ -229,8 +230,8 @@ class Scraper:
         except (IOError, OSError):
             print("Invalid destination path for this assignment!")
         except (TimeoutException, NoSuchElementException, LoginException) as e:
-            pass  # if not str(e).endswith("Message: ", ""):
-            #    print(str(e).replace("Message: ", "Error: "))
+            if str(e).endswith("Message: "):
+                print(str(e).replace("Message: ", "Error: "))
 
     def get_latest_assignment(self, assignment_files, rename_format):
         """Finds the latest assignment in a list of assignment PDFs."""

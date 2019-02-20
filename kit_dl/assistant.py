@@ -78,6 +78,7 @@ class Assistant:
 
     def setup_config(self):
         """Starts the setup assistant for setting up the config.yml file."""
+        self.dao.load_config()
         if os.path.isfile(self.dao.user_yml_path):
             self.dao.load_user()
             root_path = self.dao.user_data["destination"]["root_path"]

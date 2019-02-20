@@ -1,17 +1,20 @@
 gbi:
   assignment: {link_format: $$-aufgaben, link_name: Übungsblätter}
   name: Grundbegriffe der Informatik (2018/2019)
-  path:
+  path: C:\Users\Jonas Strittmatter\Documents\KIT\Scripts\kit_dl\Downloads\Grundbegriffe
+    der Informatik (2018-2019)
 hm:
   assignment: {file_format: blatt$, link_format: Blatt $}
   link: http://www.math.kit.edu/iana2/edu/hm1info2018w/de
   name: Höhere Mathematik 1
-  path:
+  path: C:\Users\Jonas Strittmatter\Documents\KIT\Scripts\kit_dl\Downloads\Höhere
+    Mathematik 1
 la:
   assignment: {link_format: Blatt$$, link_name: Übungen}
   name: Lineare Algebra 1
-  path:
+  path: C:\Users\Jonas Strittmatter\Documents\KIT\Scripts\kit_dl\Downloads\Lineare
+    Algebra 1
 prg:
   assignment: {link_format: Übungsblatt $/assignment$$, link_name: Übungen}
   name: Programmieren
-  path:
+  path: C:\Users\Jonas Strittmatter\Documents\KIT\Scripts\kit_dl\Downloads\Programmieren
