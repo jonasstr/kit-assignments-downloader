@@ -79,24 +79,30 @@ class Assistant:
     def setup_config(self):
         """Starts the setup assistant for setting up the config.yml file."""
         self.dao.load_config()
+        if not self.is_user_setup():
+            return False
+
+        root_path = self.dao.user_data["destination"]["root_path"]
+        assignment_folders = self.detected_assignment_folders(root_path)
+        added_courses = []
+        if assignment_folders:
+            added_courses = self.show_kit_folder_detected_dialog(assignment_folders, root_path)
+        self.show_confirm_all_courses_dialog(
+            (course for course in self.dao.config_data), added_courses, root_path
+        )
+        return True
+
+    def is_user_setup(self):
         if os.path.isfile(self.dao.user_yml_path):
             self.dao.load_user()
             root_path = self.dao.user_data["destination"]["root_path"]
             if not os.path.isdir(root_path):
                 self.echo(
-                    "\nKita has not been configured correctly (root_path not found).\n"
+                    "\nKit-dl has not been configured correctly (root_path not found).\n"
                     "Use 'kit-dl setup --user' instead."
                 )
-                return False
-
-            assignment_folders = self.detected_assignment_folders(root_path)
-            added_courses = []
-            if assignment_folders:
-                added_courses = self.show_kit_folder_detected_dialog(assignment_folders, root_path)
-            self.show_confirm_all_courses_dialog(
-                (course for course in self.dao.config_data), added_courses, root_path
-            )
-            return True
+                return True
+        return False
 
     def show_kit_folder_detected_dialog(self, assignment_folders, root_path):
         """Asks the user to confirm the download locations for the given courses."""
