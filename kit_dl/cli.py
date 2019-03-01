@@ -14,8 +14,8 @@ from kit_dl.assistant import Assistant
 from kit_dl.dao import Dao
 import kit_dl.misc.utils as utils
 
-gecko_path = os.path.join(Path(__file__).resolve().parents[1], "geckodriver.exe")
-user_yml_path = os.path.join(click.get_app_dir("kit-dl"), "user.yml")
+gecko_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "geckodriver.exe")
+user_yml_path = os.path.join(click.get_app_dir("kit_dl"), "user.yml")
 config_yml_path = os.path.join(Path(__file__).parents[0], "config.yml")
 
 yaml = YAML(typ="rt")
@@ -24,7 +24,6 @@ yaml.compact(seq_seq=False, seq_map=False)
 
 # Create data access object and load data on startup.
 dao = Dao(gecko_path, user_yml_path, config_yml_path, yaml)
-dao.load_data(suppress_access_errors=True)
 
 
 def print_info(ctx, param, value):
@@ -32,6 +31,7 @@ def print_info(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
 
+    dao.load_data(suppress_access_errors=True)
     click.echo("Current user: {}".format(dao.user_data["user_name"]))
     click.echo("Root path: {}\n".format(dao.user_data["destination"]["root_path"]))
     added_courses = dao.added_courses()
@@ -64,19 +64,21 @@ def cli(ctx):
     If you only want to download a specific assignment, use
     'kit-dl get la 9' where '9' is the assignment number.\n
     In case the download isn't working or you encounter any
-    bugs/crashes please visit github.com/jonasstr/kit-dl and
-    create an issue or contact me via email: uzxhf@student.kit.edu.
+    bugs/crashes please visit github.com/jonasstr/kit-assignments-downloader
+    and create an issue or contact me via email: uzxhf@student.kit.edu.
     """
     if str(ctx.invoked_subcommand) != "setup":
         # Make sure user.py has been created and config.yml exists.
         if setup_incorrectly("user.yml", user_yml_path) or setup_incorrectly("config.yml", config_yml_path):
             sys.exit(1)
+        else:
+            dao.load_data(suppress_access_errors=True)
 
 
 def setup_incorrectly(file_name, path):
     if not os.path.isfile(path):
         click.echo(
-            "\nKita has not been configured correctly ({} not found)."
+            "\nKit-dl has not been configured correctly ({} not found)."
             "\nUse 'kit-dl setup' before downloading assignments.".format(file_name)
         )
         return True
@@ -105,8 +107,16 @@ def setup(config, user):
     click.echo("\nSetup successful. Type 'kit-dl --help' for details.")
 
 
+def get_config_data():
+    if dao.config_data is None:
+        if dao.try_load_file(config_yml_path) is None:
+            return []
+        dao.load_data(suppress_access_errors=True)
+    return dao.config_data
+
+
 @cli.command()
-@click.argument("course_names", nargs=-1, required=True, type=click.Choice(dao.config_data))
+@click.argument("course_names", nargs=-1, required=True, type=click.Choice(get_config_data()))
 @click.argument("assignment_num")
 @click.option(
     "--move/--keep",
@@ -133,8 +143,7 @@ def get(course_names, assignment_num, move, all, headless, verbose):
     try:
         for name in courses_to_iterate(course_names, all):
             course = dao.config_data[name]
-            for num in assignments:
-                scraper.get(course, num, move)
+            scraper.get(course, name, assignments, move)
     finally:
         scraper.driver.quit()
 
@@ -149,12 +158,12 @@ def get_assignments(input):
         assignments = range(int(assignment_nums[0]), int(assignment_nums[1]) + 1)
     # Alternative int sequence for input instead of int. Example: 5,10,11
     elif is_sequence(input):
-        assignments = input.split(",")
+        assignments = list(map(int, input.split(",")))
     return assignments
 
 
 @cli.command()
-@click.argument("course_names", nargs=-1, required=False, type=click.Choice(dao.config_data))
+@click.argument("course_names", nargs=-1, required=False, type=click.Choice(get_config_data()))
 @click.option("--all", "-a", is_flag=True, help="Update assignment directories for all specified courses.")
 @click.option(
     "--headless/--show", "-hl/-s", default=True, help="Start the browser in headless mode (no visible UI)."
@@ -170,7 +179,7 @@ def update(course_names, all, headless, verbose):
             course = dao.config_data[name]
             scraper.update_directory(course, name)
     finally:
-        scraper.driver.close()
+        scraper.driver.quit()
 
 
 def courses_to_iterate(course_names, all):

@@ -30,7 +30,7 @@ Note: The setup assistant requires you to input your ilias user name and passwor
 
 ## Getting started
 
-After the setup is complete, you can start downloading assignments. Type `-h` or `--help` after a specific command for more information about that command. For a list of currently supported courses see [supported courses](#supported-courses).
+After the setup is complete, you can start downloading assignments. Type `-h` or `--help` after a specific command for more information about that command. For a list of currently supported courses see section supported courses.
 
 Download the latest assignments for all your courses:
 ```

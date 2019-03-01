@@ -1,1 +1,3 @@
 include geckodriver.exe
+include config.yml
+include LICENSE

@@ -36,7 +36,6 @@ class Dao:
             with open(path, "rb") as file:
                 return self.yaml.load(file)
         except Exception:
-            raise
             if error_msg:
                 click.echo(error_msg)
 
@@ -52,8 +51,8 @@ class Dao:
         # (e.g. for logging)
         # May be hard to find sources for unexpected behaviour or can hide bugs!
         if suppress_access_errors:
-            self.user_data = UnsafeCommentedMap(self.user_data)
-            self.config_data = UnsafeCommentedMap(self.config_data)
+            self.user_data = UnsafeCommentedMap(self.user_data) if self.user_data else []
+            self.config_data = UnsafeCommentedMap(self.config_data) if self.config_data else []
 
     def load_user(self):
         self.user_data = self.try_load_file(
