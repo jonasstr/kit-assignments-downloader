@@ -101,8 +101,8 @@ class Assistant:
                     "\nKit-dl has not been configured correctly (root_path not found).\n"
                     "Use 'kit-dl setup --user' instead."
                 )
-                return True
-        return False
+                return False
+        return True
 
     def show_kit_folder_detected_dialog(self, assignment_folders, root_path):
         """Asks the user to confirm the download locations for the given courses."""
