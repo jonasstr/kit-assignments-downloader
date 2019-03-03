@@ -6,7 +6,7 @@ An unofficial assignments downloader for [ilias.studium.kit.edu](http://ilias.st
 ## Why do I need this?
 
 With kit-dl, keeping your assignments up to date has become a thing of the past.  
-Kita automatically logs in to your ilias account, downloads the latest assignment of all your classes and moves them to the correct folders in your KIT directory - with just one command.
+Kit-dl automatically logs in to your ilias account, downloads the latest assignment of all your classes and moves them to the correct folders in your KIT directory - with just one command.
 
 *Contents*:  
 **[Requirements](#requirements)** | **[Installation and setup](#installation-and-setup)** | **[Getting started](#getting-started)** | **[Supported courses](#supported-courses)** | **[Documentation](#documentation)** | **[Adding new courses](#adding-new-courses)** | **[License](#license)**
